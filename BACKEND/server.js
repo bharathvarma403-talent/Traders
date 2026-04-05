@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -385,6 +386,13 @@ const processNovaQuery = async (query) => {
 
     return { en: enResponse, te: teResponse, products: productDetails };
 };
+app.use(cors({
+    origin: [
+        "http://localhost:5173",
+        "https://traders-git-main-bharathvarma403-talents-projects.vercel.app"
+    ],
+    credentials: true
+}));
 
 // ═══════════════════════════════════════════════════════════════════════════╗
 //  AUTH ROUTES
