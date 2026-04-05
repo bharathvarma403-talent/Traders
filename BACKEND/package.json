@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "prisma generate",
-    "build": "prisma generate && prisma migrate deploy",
+    "build": "prisma generate && prisma db push",
     "start": "node server.js",
     "seed:auth": "node prisma/seed_auth.js",
     "dev": "npm run seed:auth && node --watch server.js",
