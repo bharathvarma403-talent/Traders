@@ -33,22 +33,9 @@ const otpStore = new Map();
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
 // ─── CORS ──────────────────────────────────────────────────────────────────
-const allowedOrigins = new Set([
-    ...String(process.env.FRONTEND_URL || '')
-        .split(',')
-        .map((o) => o.trim())
-        .filter(Boolean),
-    'https://vasavi-traders-website-3gpu.vercel.app',
-]);
-
 app.use(cors({
-    origin(origin, callback) {
-        const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin || '');
-        if (!origin || allowedOrigins.has(origin) || (process.env.NODE_ENV !== 'production' && isLocal)) {
-            return callback(null, true);
-        }
-        return callback(new Error(`Origin ${origin} not allowed by CORS`));
-    },
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
 }));
 app.use(express.json());
 app.use('/uploads', express.static(uploadDir));
@@ -790,12 +777,12 @@ app.post('/api/nova', async (req, res) => {
     }
 });
 app.get("/", (req, res) => {
-    res.send("🚀 Vasavi Traders Backend is Running Successfully!");
+    res.send("API is running 🚀");
 });
 
 // ── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ status: "OK" });
 });
 
 // ─── Global Error Handler ────────────────────────────────────────────────────
@@ -805,10 +792,10 @@ app.use((err, req, res, _next) => {
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
