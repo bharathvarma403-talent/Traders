@@ -23,7 +23,8 @@ if (!fs.existsSync(uploadDir)) {
 // ─── Config ────────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refreshsecretkey456';
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const DEFAULT_GOOGLE_CLIENT_ID = '771978653102-tv01op6h2m1buefjrrjb3g3f65ffgnr5.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const RESERVATION_STATUSES = new Set(['Pending', 'Accepted', 'Rejected', 'Completed']);
