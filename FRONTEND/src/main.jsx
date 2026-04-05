@@ -5,7 +5,7 @@ import './index.css';
 
 // Backend connection indicator
 const checkBackendConnection = async () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://traders-tz8w.onrender.com';
   try {
     const response = await fetch(`${apiUrl}/api/health`);
     if (response.ok) {
