@@ -48,11 +48,15 @@ export default function Products() {
     }
     axios.get(`${API_URL}/api/products`)
       .then(res => {
-        const mapped = res.data.map(p => ({
-          ...p,
-          price: Math.round((p.priceMin + p.priceMax) / 2),
-        }));
-        setProducts(mapped);
+        if (res.data && res.data.length > 0) {
+            const mapped = res.data.map(p => ({
+            ...p,
+            price: Math.round((p.priceMin + p.priceMax) / 2),
+            }));
+            setProducts(mapped);
+        } else {
+            setProducts(FALLBACK_PRODUCTS);
+        }
         setLoading(false);
       })
       .catch(() => {
