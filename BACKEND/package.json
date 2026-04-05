@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "prisma generate && prisma db push",
-    "build": "prisma generate && prisma db push",
+    "postinstall": "prisma generate && prisma db push --accept-data-loss",
+    "build": "prisma generate && prisma db push --accept-data-loss",
     "start": "node server.js",
     "seed:auth": "node prisma/seed_auth.js",
     "dev": "npm run seed:auth && node --watch server.js",
