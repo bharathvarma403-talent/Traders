@@ -162,7 +162,10 @@ export const AuthProvider = ({ children }) => {
     if (urlError) return { success: false, error: urlError };
 
     try {
-      const response = await axios.post(`${url}/api/auth/google`, { credential });
+      const response = await axios.post(`${url}/api/auth/google`, {
+        credential,
+        clientId: GOOGLE_CLIENT_ID,
+      });
       const { token: accessToken, refreshToken, user: loggedInUser } = response.data;
       applyToken(accessToken);
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);

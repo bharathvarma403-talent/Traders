@@ -24,8 +24,19 @@ if (!fs.existsSync(uploadDir)) {
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refreshsecretkey456';
 const DEFAULT_GOOGLE_CLIENT_ID = '771978653102-tv01op6h2m1buefjrrjb3g3f65ffgnr5.apps.googleusercontent.com';
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+const GOOGLE_CLIENT_IDS = [...new Set(
+    [
+        process.env.GOOGLE_CLIENT_IDS,
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.VITE_GOOGLE_CLIENT_ID,
+        DEFAULT_GOOGLE_CLIENT_ID,
+    ]
+        .flatMap((value) => String(value || '').split(','))
+        .map((value) => value.trim())
+        .filter(Boolean)
+)];
+const GOOGLE_CLIENT_ID = GOOGLE_CLIENT_IDS[0] || null;
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID || undefined);
 
 const RESERVATION_STATUSES = new Set(['Pending', 'Accepted', 'Rejected', 'Completed']);
 
@@ -184,6 +195,7 @@ const signRefreshToken = (user) =>
 
 const safeUser = (u) => ({ id: u.id, name: u.name, email: u.email, phone: u.phone ?? null, role: u.role });
 const normalizeEmail = (value = '') => value.trim().toLowerCase();
+const isGoogleClientId = (value = '') => /^[a-z0-9_-]+\.apps\.googleusercontent\.com$/i.test(String(value).trim());
 
 const findUserByEmail = async (email) => {
     const normalizedEmail = normalizeEmail(email);
@@ -478,22 +490,34 @@ app.post('/api/auth/login-phone', authLimiter, validate(loginPhoneSchema), async
 
 // ── Google OAuth ────────────────────────────────────────────────────────────
 app.post('/api/auth/google', authLimiter, async (req, res) => {
-    const { credential } = req.body;
+    const { credential, clientId } = req.body;
     if (!credential) return res.status(400).json({ error: 'Credential token required.' });
-    if (!GOOGLE_CLIENT_ID) {
+    const requestClientId = isGoogleClientId(clientId) ? clientId.trim() : null;
+    const allowedGoogleClientIds = [...new Set([
+        ...GOOGLE_CLIENT_IDS,
+        ...(requestClientId ? [requestClientId] : []),
+    ])];
+
+    if (!allowedGoogleClientIds.length) {
         return res.status(500).json({ error: 'Google OAuth is not configured on the server. Set GOOGLE_CLIENT_ID in BACKEND/.env.' });
     }
 
     try {
-        const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
-        const { email, name, sub: googleId } = ticket.getPayload();
+        const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: allowedGoogleClientIds });
+        const payload = ticket.getPayload();
+
+        if (!payload?.email || payload.email_verified === false) {
+            return res.status(401).json({ error: 'Google account email could not be verified.' });
+        }
+
+        const { email, name, sub: googleId } = payload;
         const normalizedEmail = normalizeEmail(email);
 
         let user = await findUserByEmail(normalizedEmail);
 
         if (!user) {
             user = await prisma.user.create({
-                data: { email: normalizedEmail, name, googleId, role: 'USER', lastLoginAt: new Date() },
+                data: { email: normalizedEmail, name: name || normalizedEmail.split('@')[0], googleId, role: 'USER', lastLoginAt: new Date() },
             });
         } else {
             if (!user.googleId) {
@@ -506,8 +530,17 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
         const refreshToken = signRefreshToken(user);
         res.json({ token: accessToken, refreshToken, user: safeUser(user) });
     } catch (err) {
-        console.error('Google Auth error:', err);
-        res.status(401).json({ error: 'Invalid Google token.' });
+        console.error('Google Auth error:', {
+            message: err.message,
+            configuredClientIds: GOOGLE_CLIENT_IDS,
+            requestClientId,
+        });
+        const isAudienceMismatch = /audience|recipient/i.test(err.message || '');
+        res.status(401).json({
+            error: isAudienceMismatch
+                ? 'Google Sign-In client mismatch. Use the same Google client ID on Vercel and Render.'
+                : 'Unable to verify your Google sign-in. Please try again.',
+        });
     }
 });
 
