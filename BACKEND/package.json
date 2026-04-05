@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && prisma db push",
     "build": "prisma generate && prisma db push",
     "start": "node server.js",
     "seed:auth": "node prisma/seed_auth.js",
