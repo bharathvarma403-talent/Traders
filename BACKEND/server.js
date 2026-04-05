@@ -33,8 +33,28 @@ const otpStore = new Map();
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
 // ─── CORS ──────────────────────────────────────────────────────────────────
+const configuredOrigins = String(process.env.FRONTEND_URL || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true;
+    if (configuredOrigins.includes(origin)) return true;
+    if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
+    if (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/i.test(origin)) {
+        return true;
+    }
+    return false;
+};
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL,
+    origin(origin, callback) {
+        if (isAllowedOrigin(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
 }));
 app.use(express.json());
