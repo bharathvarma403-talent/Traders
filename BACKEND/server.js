@@ -492,20 +492,28 @@ app.post('/api/auth/login-phone', authLimiter, validate(loginPhoneSchema), async
 app.post('/api/auth/google', authLimiter, async (req, res) => {
     const { credential, clientId } = req.body;
     if (!credential) return res.status(400).json({ error: 'Credential token required.' });
+
+    // Identify which Client IDs we should trust
     const requestClientId = isGoogleClientId(clientId) ? clientId.trim() : null;
     const allowedGoogleClientIds = [...new Set([
+        GOOGLE_CLIENT_ID,
+        requestClientId,
         ...GOOGLE_CLIENT_IDS,
-        ...(requestClientId ? [requestClientId] : []),
-    ])];
+    ])].filter(Boolean);
 
-    if (!allowedGoogleClientIds.length) {
-        return res.status(500).json({ error: 'Google OAuth is not configured on the server. Set GOOGLE_CLIENT_ID in BACKEND/.env.' });
+    if (allowedGoogleClientIds.length === 0) {
+        return res.status(500).json({
+            error: 'Google OAuth is not configured on the server. Please check your BACKEND/.env file.',
+        });
     }
 
     try {
-        const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: allowedGoogleClientIds });
-        const payload = ticket.getPayload();
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: allowedGoogleClientIds,
+        });
 
+        const payload = ticket.getPayload();
         if (!payload?.email || payload.email_verified === false) {
             return res.status(401).json({ error: 'Google account email could not be verified.' });
         }
@@ -517,7 +525,13 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
 
         if (!user) {
             user = await prisma.user.create({
-                data: { email: normalizedEmail, name: name || normalizedEmail.split('@')[0], googleId, role: 'USER', lastLoginAt: new Date() },
+                data: {
+                    email: normalizedEmail,
+                    name: name || normalizedEmail.split('@')[0],
+                    googleId,
+                    role: 'USER',
+                    lastLoginAt: new Date(),
+                },
             });
         } else {
             if (!user.googleId) {
@@ -530,16 +544,18 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
         const refreshToken = signRefreshToken(user);
         res.json({ token: accessToken, refreshToken, user: safeUser(user) });
     } catch (err) {
-        console.error('Google Auth error:', {
+        console.error('Google Auth Security Error:', {
             message: err.message,
-            configuredClientIds: GOOGLE_CLIENT_IDS,
-            requestClientId,
+            tokenAudience: err.payload?.aud, // Only available if verification fails due to aud
+            allowedAudiences: allowedGoogleClientIds,
         });
+
         const isAudienceMismatch = /audience|recipient/i.test(err.message || '');
+        
         res.status(401).json({
             error: isAudienceMismatch
-                ? 'Google Sign-In client mismatch. Use the same Google client ID on Vercel and Render.'
-                : 'Unable to verify your Google sign-in. Please try again.',
+                ? 'Security Error: Google Client ID mismatch. Please ensure your Vercel and Render environments share the same GOOGLE_CLIENT_ID.'
+                : 'Unable to verify your Google sign-in. Your session may have expired or the token is invalid.',
         });
     }
 });
