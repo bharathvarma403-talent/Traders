@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  password     String?
+  phone        String?       @unique
+  googleId     String?       @unique
+  role         String        @default("USER") // "USER" or "ADMIN"
+  lastLoginAt  DateTime?
+  createdAt    DateTime      @default(now())
+  reservations Reservation[]
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id           Int             @id @default(autoincrement())
+  name         String
+  category     String
+  description  String?
+  priceMin     Float?
+  priceMax     Float?
+  imageUrl     String?
+  brandId      Int
+  brand        Brand           @relation(fields: [brandId], references: [id])
+  ratings      ProductRating[]
+  stockStatus  String          @default("In Stock")
+  stockCount   Int             @default(100)
+}
+
+model ProductRating {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  userId    Int?
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Reservation {
+  id         Int      @id @default(autoincrement())
+  name       String
+  phone      String
+  email      String?  // Populated when order is placed by a logged-in user
+  userId     Int?     // Optional link to User account
+  user       User?    @relation(fields: [userId], references: [id])
+  productId  Int
+  quantity   Int
+  pickupDate DateTime
+  notes      String?  // Special notes from user
+  status     String   @default("Pending")
+  createdAt  DateTime @default(now())
+}
+
+model AiQuery {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  query     String
+  response  String
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,18 @@
+{
+  "name": "vasavi-traders-root",
+  "version": "1.0.0",
+  "description": "Root for Vasavi Traders Website",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix FRONTEND\" \"npm run dev --prefix BACKEND\"",
+    "install:all": "npm install --prefix FRONTEND && npm install --prefix BACKEND",
+    "build:frontend": "npm run build --prefix FRONTEND",
+    "start:backend": "npm start --prefix BACKEND"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@react-oauth/google": "^0.13.4",
+    "axios": "^1.14.0"
+  }
+}
