@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -12,6 +11,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+const app = express();
+const prisma = new PrismaClient();
+
 // Ensure uploads folder exists (Render fix)
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
@@ -24,8 +26,6 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refreshsecretkey45
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-const app = express();
-const prisma = new PrismaClient();
 const RESERVATION_STATUSES = new Set(['Pending', 'Accepted', 'Rejected', 'Completed']);
 
 // ─── In-memory OTP store { phone: { otp, expiry } } ────────────────────────
@@ -386,13 +386,6 @@ const processNovaQuery = async (query) => {
 
     return { en: enResponse, te: teResponse, products: productDetails };
 };
-app.use(cors({
-    origin: [
-        "http://localhost:5173",
-        "https://traders-git-main-bharathvarma403-talents-projects.vercel.app"
-    ],
-    credentials: true
-}));
 
 // ═══════════════════════════════════════════════════════════════════════════╗
 //  AUTH ROUTES
@@ -817,3 +810,5 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
+
+module.exports = app;
