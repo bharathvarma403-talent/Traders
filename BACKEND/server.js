@@ -55,13 +55,19 @@ app.use('/uploads', express.static(uploadDir));
 // ─── Multer Storage Config ─────────────────────────────────────────────────
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, uploadDir)
-    }
-},
+        cb(null, uploadDir);
+    },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname))
+        cb(
+            null,
+            Date.now() +
+            '-' +
+            Math.round(Math.random() * 1E9) +
+            path.extname(file.originalname)
+        );
     }
 });
+
 const upload = multer({ storage: storage });
 
 // ─── Rate Limiters ─────────────────────────────────────────────────────────
