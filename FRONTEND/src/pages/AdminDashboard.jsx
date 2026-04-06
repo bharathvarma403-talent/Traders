@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   CheckCircle2, Clock3, Package, RefreshCw, Search, ShieldCheck, XCircle,
-  BarChart3, Mail, Users, Boxes, Settings, LayoutDashboard, Menu, X, ClipboardList, Plus, Trash2
+  BarChart3, Mail, Users, Boxes, Settings, LayoutDashboard, Menu, X, ClipboardList, Plus, Trash2, Edit2
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { useToast } from '../utils/ToastContext';
@@ -56,6 +56,9 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [updatingProductId, setUpdatingProductId] = useState(null);
+  const [editingProductId, setEditingProductId] = useState(null);
+  const [editProductData, setEditProductData] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [addingProduct, setAddingProduct] = useState(false);
@@ -161,6 +164,39 @@ export default function AdminDashboard() {
       toast.success('Product deleted!');
     } catch (err) {
       toast.error(err?.response?.data?.error || 'Failed to delete product.');
+    }
+  };
+
+  // ── Update Product (Full Edit) ───────────────────────────
+  const handleUpdateProduct = async (e) => {
+    e.preventDefault();
+    if (!API_URL || !editingProductId) return;
+    setSavingEdit(true);
+    try {
+      const formData = new FormData();
+      formData.append('name', editProductData.name);
+      formData.append('category', editProductData.category);
+      formData.append('description', editProductData.description);
+      formData.append('priceMin', editProductData.priceMin);
+      formData.append('priceMax', editProductData.priceMax);
+      formData.append('brandName', editProductData.brandName);
+      formData.append('stockCount', editProductData.stockCount);
+      if (editProductData.image instanceof File) {
+        formData.append('image', editProductData.image);
+      }
+
+      const { data } = await axios.put(`${API_URL}/api/admin/products/${editingProductId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setProducts(prev => prev.map(p => p.id === editingProductId ? data : p));
+      toast.success('Product updated!');
+      setEditingProductId(null);
+      setEditProductData(null);
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'Failed to update product.');
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -568,40 +604,107 @@ export default function AdminDashboard() {
             ) : (
               <div className="grid gap-3">
                 {products.map(p => (
-                  <div key={p.id} className="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
-                    style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{p.name}</div>
-                      <div className="text-xs" style={{ color: 'var(--color-muted)' }}>{p.brand?.name} · {p.category}</div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs" style={{ color: 'var(--color-muted)' }}>Qty:</label>
-                        <input type="number" min="0" defaultValue={p.stockCount}
-                          className="w-20 rounded-lg px-2 py-1.5 text-sm outline-none"
-                          style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                          onBlur={e => {
-                            const val = parseInt(e.target.value);
-                            if (!isNaN(val) && val !== p.stockCount) handleStockUpdate(p.id, undefined, val);
-                          }} />
-                      </div>
-                      <button
-                        onClick={() => handleStockUpdate(p.id, p.stockStatus === 'In Stock' ? 'Out of Stock' : 'In Stock')}
-                        disabled={updatingProductId === p.id}
-                        className="rounded-full px-3 py-1.5 text-xs font-semibold transition-all"
-                        style={p.stockStatus === 'In Stock'
-                          ? { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.24)', color: '#86efac' }
-                          : { background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.24)', color: '#fca5a5' }}>
-                        {updatingProductId === p.id ? '...' : p.stockStatus}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(p.id)}
-                        className="rounded-full p-2 transition-all hover:bg-red-500/10"
-                        title="Delete Product"
-                        style={{ color: '#fca5a5' }}>
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                  <div key={p.id} className="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 transition-all"
+                    style={{ background: 'var(--color-surface)', border: editingProductId === p.id ? '1px solid var(--color-accent)' : '1px solid var(--color-border)' }}>
+                    
+                    {editingProductId === p.id ? (
+                      <form onSubmit={handleUpdateProduct} className="flex-1 w-full space-y-4 py-2">
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>Edit Product</h4>
+                          <button type="button" onClick={() => { setEditingProductId(null); setEditProductData(null); }} className="text-xs font-semibold py-1 px-3 rounded-full hover:bg-neutral-500/10" style={{ color: 'var(--color-muted)' }}>Cancel</button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Name *</label>
+                            <input type="text" required value={editProductData.name} onChange={e => setEditProductData({...editProductData, name: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Brand *</label>
+                            <input type="text" required value={editProductData.brandName} onChange={e => setEditProductData({...editProductData, brandName: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Category *</label>
+                            <select required value={editProductData.category} onChange={e => setEditProductData({...editProductData, category: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                              <option value="Electrical">Electrical</option><option value="Pipes">Pipes</option><option value="Tanks">Tanks</option>
+                              <option value="Cement">Cement</option><option value="Paint">Paint</option><option value="Hardware">Hardware</option><option value="General">General</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Qty</label>
+                            <input type="number" value={editProductData.stockCount} onChange={e => setEditProductData({...editProductData, stockCount: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Description *</label>
+                            <textarea required value={editProductData.description} onChange={e => setEditProductData({...editProductData, description: e.target.value})} rows="1" className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>New Image (optional)</label>
+                            <input type="file" accept="image/*" onChange={e => setEditProductData({...editProductData, image: e.target.files[0]})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
+                          </div>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <button type="submit" disabled={savingEdit} className="btn-primary px-4 py-2 text-sm rounded-lg" style={{ opacity: savingEdit ? 0.7 : 1 }}>
+                            {savingEdit ? 'Saving...' : 'Save Changes'}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <>
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{p.name}</div>
+                          <div className="text-xs" style={{ color: 'var(--color-muted)' }}>{p.brand?.name} · {p.category}</div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs" style={{ color: 'var(--color-muted)' }}>Qty:</label>
+                            <input type="number" min="0" defaultValue={p.stockCount}
+                              className="w-20 rounded-lg px-2 py-1.5 text-sm outline-none"
+                              style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                              onBlur={e => {
+                                const val = parseInt(e.target.value);
+                                if (!isNaN(val) && val !== p.stockCount) handleStockUpdate(p.id, undefined, val);
+                              }} />
+                          </div>
+                          <button
+                            onClick={() => handleStockUpdate(p.id, p.stockStatus === 'In Stock' ? 'Out of Stock' : 'In Stock')}
+                            disabled={updatingProductId === p.id}
+                            className="rounded-full px-3 py-1.5 text-xs font-semibold transition-all"
+                            style={p.stockStatus === 'In Stock'
+                              ? { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.24)', color: '#86efac' }
+                              : { background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.24)', color: '#fca5a5' }}>
+                            {updatingProductId === p.id ? '...' : p.stockStatus}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingProductId(p.id);
+                              setEditProductData({
+                                name: p.name,
+                                brandName: p.brand?.name || '',
+                                category: p.category,
+                                description: p.description || '',
+                                priceMin: p.priceMin || 0,
+                                priceMax: p.priceMax || 0,
+                                stockCount: p.stockCount || 0,
+                                image: null // Keep null so we don't upload a bad file reference
+                              });
+                            }}
+                            className="rounded-full p-2 transition-all hover:bg-blue-500/10"
+                            title="Edit Product"
+                            style={{ color: 'var(--color-accent)' }}>
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProduct(p.id)}
+                            className="rounded-full p-2 transition-all hover:bg-red-500/10"
+                            title="Delete Product"
+                            style={{ color: '#fca5a5' }}>
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

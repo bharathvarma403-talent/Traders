@@ -735,6 +735,57 @@ app.delete('/api/admin/products/:id', authenticate, authorize(['ADMIN']), async 
     }
 });
 
+// ── Update Product (Admin) ──────────────────────────────────────────────────
+app.put('/api/admin/products/:id', authenticate, authorize(['ADMIN']), upload.single('image'), async (req, res) => {
+    const productId = Number(req.params.id);
+    if (!Number.isInteger(productId)) return res.status(400).json({ error: 'Invalid product id.' });
+    
+    try {
+        const { name, category, description, priceMin, priceMax, brandName, stockCount } = req.body;
+        
+        if (!name || !category || !brandName || !description) {
+            return res.status(400).json({ error: 'Name, category, brand, and description are required.' });
+        }
+
+        // Upsert Brand
+        let brandId = null;
+        if (brandName) {
+            const brand = await prisma.brand.upsert({
+                where: { name: brandName },
+                update: {},
+                create: { name: brandName }
+            });
+            brandId = brand.id;
+        }
+
+        const updateData = {
+            name,
+            category,
+            description,
+            priceMin: priceMin ? Number(priceMin) : 0,
+            priceMax: priceMax ? Number(priceMax) : 0,
+            stockCount: stockCount ? parseInt(stockCount, 10) : 0,
+            brandId
+        };
+
+        if (req.file) {
+            updateData.imageUrl = `/uploads/${req.file.filename}`;
+        }
+
+        const updatedProduct = await prisma.product.update({
+            where: { id: productId },
+            data: updateData,
+            include: { brand: true }
+        });
+
+        res.json(updatedProduct);
+    } catch (err) {
+        if (err.code === 'P2025') return res.status(404).json({ error: 'Product not found.' });
+        console.error('PUT /api/admin/products/:id error:', err);
+        res.status(500).json({ error: 'Failed to update product.' });
+    }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════╗
 //  RESERVATIONS / ORDERS
 // ═══════════════════════════════════════════════════════════════════════════╝
