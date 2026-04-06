@@ -683,8 +683,12 @@ app.post('/api/admin/products', authenticate, authorize(['ADMIN']), upload.singl
     try {
         const { name, category, description, priceMin, priceMax, brandName, stockCount } = req.body;
 
-        if (!name || !category || !brandName) {
-            return res.status(400).json({ error: 'Name, category, and brand are required.' });
+        if (!name || !category || !brandName || !description) {
+            return res.status(400).json({ error: 'Name, category, brand, and description are required.' });
+        }
+        
+        if (!req.file) {
+            return res.status(400).json({ error: 'Product image is required.' });
         }
 
         // Upsert Brand
@@ -714,6 +718,20 @@ app.post('/api/admin/products', authenticate, authorize(['ADMIN']), upload.singl
     } catch (err) {
         console.error('POST /api/admin/products error:', err);
         res.status(500).json({ error: 'Failed to create product.' });
+    }
+});
+
+// ── Delete Product (Admin) ──────────────────────────────────────────────────
+app.delete('/api/admin/products/:id', authenticate, authorize(['ADMIN']), async (req, res) => {
+    const productId = Number(req.params.id);
+    if (!Number.isInteger(productId)) return res.status(400).json({ error: 'Invalid product id.' });
+    try {
+        await prisma.product.delete({ where: { id: productId } });
+        res.json({ message: 'Product deleted successfully.' });
+    } catch (err) {
+        if (err.code === 'P2025') return res.status(404).json({ error: 'Product not found.' });
+        console.error('DELETE /api/admin/products/:id error:', err);
+        res.status(500).json({ error: 'Failed to delete product.' });
     }
 });
 
@@ -861,11 +879,34 @@ app.use((err, req, res, _next) => {
     res.status(500).json({ error: 'An unexpected error occurred.' });
 });
 
+// ─── Ensure Default Admin Exists ───────────────────────────────────────────
+const ensureAdminExists = async () => {
+    try {
+        const adminEmail = 'vasavi@admin.com';
+        const existingAdmin = await prisma.user.findFirst({ where: { email: { equals: adminEmail, mode: 'insensitive' } } });
+        if (!existingAdmin) {
+            const hashed = await bcrypt.hash('123456', 12);
+            await prisma.user.create({
+                data: {
+                    name: 'Vasavi Admin',
+                    email: adminEmail,
+                    password: hashed,
+                    role: 'ADMIN'
+                }
+            });
+            console.log('Created default admin: vasavi@admin.com');
+        }
+    } catch (err) {
+        console.error('Failed to create default admin:', err.message);
+    }
+};
+
 // ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
+    await ensureAdminExists();
 });
 
 module.exports = app;

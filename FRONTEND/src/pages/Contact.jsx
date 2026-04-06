@@ -37,7 +37,7 @@ export default function Contact() {
               <div>
                 <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--color-text)' }}>Store Location</h3>
                 <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Vasavi Traders</p>
-                <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Narasaraopet, Andhra Pradesh</p>
+                <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Edlapadu, Andhra Pradesh</p>
               </div>
             </div>
 

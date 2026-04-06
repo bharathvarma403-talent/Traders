@@ -46,8 +46,22 @@ export default function Products() {
       setLoading(false);
       return;
     }
+
+    let isMounted = true;
+    let didTimeout = false;
+
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        didTimeout = true;
+        setProducts(FALLBACK_PRODUCTS);
+        setLoading(false);
+      }
+    }, 3000);
+
     axios.get(`${API_URL}/api/products`)
       .then(res => {
+        if (!isMounted || didTimeout) return;
+        clearTimeout(timeoutId);
         if (res.data && res.data.length > 0) {
             const mapped = res.data.map(p => ({
             ...p,
@@ -60,9 +74,16 @@ export default function Products() {
         setLoading(false);
       })
       .catch(() => {
+        if (!isMounted || didTimeout) return;
+        clearTimeout(timeoutId);
         setProducts(FALLBACK_PRODUCTS);
         setLoading(false);
       });
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [API_URL]);
 
   const categories = [...new Set(products.map(p => p.category))].sort();

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   CheckCircle2, Clock3, Package, RefreshCw, Search, ShieldCheck, XCircle,
-  BarChart3, Mail, Users, Boxes, Settings, LayoutDashboard, Menu, X, ClipboardList, Plus
+  BarChart3, Mail, Users, Boxes, Settings, LayoutDashboard, Menu, X, ClipboardList, Plus, Trash2
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { useToast } from '../utils/ToastContext';
@@ -142,6 +142,19 @@ export default function AdminDashboard() {
       setUpdatingProductId(null);
     }
   };
+  // ── Delete Product ───────────────────────────────────────
+  const handleDeleteProduct = async (productId) => {
+    if (!API_URL) return;
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    try {
+      await axios.delete(`${API_URL}/api/admin/products/${productId}`);
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      toast.success('Product deleted!');
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'Failed to delete product.');
+    }
+  };
+
 
   // ── Add Product ────────────────────────────────────────
   const handleAddProduct = async (e) => {
@@ -515,12 +528,12 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Description</label>
-                    <textarea value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} rows="2" className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}></textarea>
+                    <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Description *</label>
+                    <textarea required value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} rows="2" className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}></textarea>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Product Image</label>
-                    <input type="file" accept="image/*" onChange={e => setNewProduct({...newProduct, image: e.target.files[0]})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-muted)' }} />
+                    <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Product Image *</label>
+                    <input required type="file" accept="image/*" onChange={e => setNewProduct({...newProduct, image: e.target.files[0]})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-muted)' }} />
                   </div>
                   <div className="flex justify-end pt-2">
                     <button type="submit" disabled={addingProduct} className="btn-primary flex items-center justify-center min-w-[120px] py-2.5 text-sm" style={{ opacity: addingProduct ? 0.7 : 1 }}>
@@ -563,6 +576,13 @@ export default function AdminDashboard() {
                           ? { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.24)', color: '#86efac' }
                           : { background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.24)', color: '#fca5a5' }}>
                         {updatingProductId === p.id ? '...' : p.stockStatus}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProduct(p.id)}
+                        className="rounded-full p-2 transition-all hover:bg-red-500/10"
+                        title="Delete Product"
+                        style={{ color: '#fca5a5' }}>
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>

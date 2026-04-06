@@ -41,7 +41,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2.5">
                 <MapPin className="h-4 w-4 mt-0.5 shrink-0" style={{ color: 'var(--color-muted)' }} />
-                <span className="text-sm" style={{ color: 'var(--color-muted)' }}>Vasavi Traders,<br/>Narasaraopet, A.P.</span>
+                <span className="text-sm" style={{ color: 'var(--color-muted)' }}>Vasavi Traders,<br/>Edlapadu, A.P.</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 shrink-0" style={{ color: 'var(--color-muted)' }} />
