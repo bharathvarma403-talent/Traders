@@ -67,7 +67,10 @@ export default function AdminDashboard() {
 
   // ── Load Orders ────────────────────────────────────────
   const loadReservations = async () => {
-    if (!API_URL) return;
+    if (!API_URL) {
+      setErrorMessage('Backend API URL is not configured (Missing VITE_API_URL).');
+      return;
+    }
     setLoadingOrders(true);
     try {
       const { data } = await axios.get(`${API_URL}/api/reservations`);
@@ -81,7 +84,10 @@ export default function AdminDashboard() {
 
   // ── Load Users ─────────────────────────────────────────
   const loadUsers = async () => {
-    if (!API_URL) return;
+    if (!API_URL) {
+      setErrorMessage('Backend API URL is not configured (Missing VITE_API_URL).');
+      return;
+    }
     setLoadingUsers(true);
     try {
       const { data } = await axios.get(`${API_URL}/api/admin/users`);
@@ -95,7 +101,10 @@ export default function AdminDashboard() {
 
   // ── Load Products ──────────────────────────────────────
   const loadProducts = async () => {
-    if (!API_URL) return;
+    if (!API_URL) {
+      setErrorMessage('Backend API URL is not configured (Missing VITE_API_URL).');
+      return;
+    }
     setLoadingProducts(true);
     try {
       const { data } = await axios.get(`${API_URL}/api/products`);
@@ -434,6 +443,10 @@ export default function AdminDashboard() {
               <div className="flex justify-center py-16">
                 <div className="h-8 w-8 animate-spin rounded-full border-b-2" style={{ borderColor: 'var(--color-accent)' }} />
               </div>
+            ) : users.length === 0 ? (
+              <div className="text-center py-16 text-sm rounded-2xl" style={{ background: 'var(--color-surface)', border: '1px dashed var(--color-border)', color: 'var(--color-muted)' }}>
+                No users found.
+              </div>
             ) : (
               <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                 <div className="overflow-x-auto">
@@ -547,6 +560,10 @@ export default function AdminDashboard() {
             {loadingProducts ? (
               <div className="flex justify-center py-16">
                 <div className="h-8 w-8 animate-spin rounded-full border-b-2" style={{ borderColor: 'var(--color-accent)' }} />
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-16 text-sm rounded-2xl" style={{ background: 'var(--color-surface)', border: '1px dashed var(--color-border)', color: 'var(--color-muted)' }}>
+                No products found in the catalog.
               </div>
             ) : (
               <div className="grid gap-3">
