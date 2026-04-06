@@ -144,7 +144,7 @@ function SuccessBanner({ message }) {
 }
 
 export default function Login() {
-  const [activeTab, setActiveTab] = useState(TAB.EMAIL);
+  const [activeTab, setActiveTab] = useState(TAB.REGISTER);
   const [isAdminMode, setIsAdminMode] = useState(false);
 
   // Email login
@@ -388,9 +388,9 @@ export default function Login() {
               {/* Tab Pills */}
               <div className="flex gap-2 rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.03)' }}>
                 {[
+                  { id: TAB.REGISTER, icon: UserPlus, label: 'Register' },
                   { id: TAB.EMAIL, icon: Mail, label: 'Email' },
                   { id: TAB.PHONE, icon: Phone, label: 'Phone' },
-                  { id: TAB.REGISTER, icon: UserPlus, label: 'Register' },
                 ].map(({ id, icon: Icon, label }) => (
                   <button key={id} type="button" onClick={() => handleTabChange(id)}
                     className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all"

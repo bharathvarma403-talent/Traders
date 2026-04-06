@@ -6,7 +6,7 @@ import { useToast } from '../utils/ToastContext';
 import axios from 'axios';
 
 export default function Modal({ isOpen, onClose, product }) {
-  const [formData, setFormData] = useState({ quantity: 1, pickupDate: '', notes: '' });
+  const [formData, setFormData] = useState({ quantity: 1, pickupDate: '', phoneNumber: '', notes: '' });
   const [status, setStatus] = useState('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const { isAuthenticated } = useAuth();
@@ -38,6 +38,7 @@ export default function Modal({ isOpen, onClose, product }) {
         productId: product.id,
         quantity: Number(formData.quantity),
         pickupDate: formData.pickupDate,
+        phoneNumber: formData.phoneNumber,
         notes: formData.notes || undefined,
       });
       setStatus('success');
@@ -56,7 +57,7 @@ export default function Modal({ isOpen, onClose, product }) {
   const handleClose = () => {
     setStatus('idle');
     setErrorMsg('');
-    setFormData({ quantity: 1, pickupDate: '', notes: '' });
+    setFormData({ quantity: 1, pickupDate: '', phoneNumber: '', notes: '' });
     onClose();
   };
 
@@ -114,6 +115,11 @@ export default function Modal({ isOpen, onClose, product }) {
                   <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-muted)' }}>Preferred Delivery Date</label>
                   <input required type="date" name="pickupDate" value={formData.pickupDate} onChange={handleChange} style={{ ...inputStyle, colorScheme: 'dark' }} />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-muted)' }}>Phone Number</label>
+                <input required type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="+91..." style={inputStyle} />
               </div>
 
               <div>

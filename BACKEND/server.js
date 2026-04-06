@@ -138,6 +138,7 @@ const reservationSchema = z.object({
     productId: z.number().int().positive(),
     quantity: z.number().int().positive('Quantity must be at least 1'),
     pickupDate: z.string().min(1, 'Delivery date is required'),
+    phoneNumber: z.string().regex(/^\+?[0-9]{7,15}$/, 'A valid phone number is required to place an order'),
     notes: z.string().max(500).optional(),
 });
 
@@ -418,14 +419,26 @@ app.post('/api/auth/register', authLimiter, validate(registerSchema), async (req
     try {
         const normalizedEmail = normalizeEmail(email);
         const existingEmail = await findUserByEmail(normalizedEmail);
-        if (existingEmail) {
-            return res.status(409).json({ error: 'Welcome back! An account with this email already exists. Please log in.', redirectToLogin: true });
-        }
+        const existingPhone = phone ? await prisma.user.findUnique({ where: { phone } }) : null;
+        
+        const existingUser = existingEmail || existingPhone;
 
-        if (phone) {
-            const existingPhone = await prisma.user.findUnique({ where: { phone } });
-            if (existingPhone) {
-                return res.status(409).json({ error: 'Welcome back! This phone number is already registered. Please log in.', redirectToLogin: true });
+        if (existingUser) {
+            // Auto Login if valid password
+            const isMatch = await bcrypt.compare(password, existingUser.password);
+            if (isMatch) {
+                // Update last login
+                await prisma.user.update({ where: { id: existingUser.id }, data: { lastLoginAt: new Date() } });
+                const accessToken = signAccessToken(existingUser);
+                const refreshToken = signRefreshToken(existingUser);
+                return res.status(200).json({ 
+                    message: "Welcome back! You are an existing user. Login successful.", 
+                    token: accessToken, 
+                    refreshToken, 
+                    user: safeUser(existingUser) 
+                });
+            } else {
+                return res.status(409).json({ error: 'Welcome back! An account already exists. Please log in with the correct password.', redirectToLogin: true });
             }
         }
 
@@ -802,11 +815,14 @@ app.post('/api/reservations', authenticate, async (req, res) => {
         return res.status(400).json({ error: msg });
     }
 
-    const { productId, quantity, pickupDate, notes } = result.data;
+    const { productId, quantity, pickupDate, phoneNumber, notes } = result.data;
 
     try {
         const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { name: true, email: true, phone: true } });
         if (!user) return res.status(404).json({ error: 'User not found.' });
+
+        const phoneToUse = phoneNumber || user.phone;
+        if (!phoneToUse) return res.status(400).json({ error: 'Phone number is required to place an order so the Admin can contact you.' });
 
         // Check product stock
         const product = await prisma.product.findUnique({ where: { id: productId } });
@@ -816,7 +832,7 @@ app.post('/api/reservations', authenticate, async (req, res) => {
         const reservation = await prisma.reservation.create({
             data: {
                 name: user.name,
-                phone: user.phone || '',
+                phone: phoneToUse,
                 email: user.email,
                 userId: req.user.id,
                 productId,
