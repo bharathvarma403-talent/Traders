@@ -53,6 +53,11 @@ export default function AdminDashboard() {
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Products state
+  const CATEGORY_OPTIONS = [
+    'Electrical', 'Plumbing', 'Cement', 'Paint', 
+    'Steel', 'Sand', 'Bricks', 'Tools', 'Hardware'
+  ];
+
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [updatingProductId, setUpdatingProductId] = useState(null);
@@ -62,8 +67,10 @@ export default function AdminDashboard() {
   
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [addingProduct, setAddingProduct] = useState(false);
-  const [newProduct, setNewProduct] = useState({
-    name: '', category: 'General', description: '', priceMin: '', priceMax: '', brandName: '', stockCount: '100', image: null
+  const [newProduct, setNewProduct] = useState({ 
+    name: '', category: 'Electrical', subcategory: '', 
+    description: '', price: '', unit: '', brandName: '', 
+    stockCount: 100, image: null 
   });
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -176,9 +183,10 @@ export default function AdminDashboard() {
       const formData = new FormData();
       formData.append('name', editProductData.name);
       formData.append('category', editProductData.category);
+      formData.append('subcategory', editProductData.subcategory);
       formData.append('description', editProductData.description);
-      formData.append('priceMin', editProductData.priceMin);
-      formData.append('priceMax', editProductData.priceMax);
+      formData.append('price', editProductData.price);
+      formData.append('unit', editProductData.unit);
       formData.append('brandName', editProductData.brandName);
       formData.append('stockCount', editProductData.stockCount);
       if (editProductData.image instanceof File) {
@@ -221,7 +229,7 @@ export default function AdminDashboard() {
       });
       setProducts(prev => [data, ...prev]);
       setShowAddProduct(false);
-      setNewProduct({ name: '', category: 'General', description: '', priceMin: '', priceMax: '', brandName: '', stockCount: '100', image: null });
+      setNewProduct({ name: '', category: CATEGORY_OPTIONS[0], subcategory: '', description: '', price: '', unit: '', brandName: '', stockCount: 100, image: null });
       toast.success('Product added successfully!');
     } catch (err) {
       toast.error(err?.response?.data?.error || 'Failed to add product.');
@@ -542,30 +550,19 @@ export default function AdminDashboard() {
               <div className="rounded-2xl p-6" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                 <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--color-text)' }}>Add New Product</h2>
                 <form onSubmit={handleAddProduct} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                     <div>
-                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Product Name *</label>
-                      <input type="text" required value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+                      <input required type="text" placeholder="Product Name *" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Brand Name *</label>
-                      <input type="text" required value={newProduct.brandName} onChange={e => setNewProduct({...newProduct, brandName: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+                      <input required type="text" placeholder="Brand *" value={newProduct.brandName} onChange={e => setNewProduct({...newProduct, brandName: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Category *</label>
                       <select required value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
-                        <option value="Electrical">Electrical</option>
-                        <option value="Pipes">Pipes</option>
-                        <option value="Tanks">Tanks</option>
-                        <option value="Cement">Cement</option>
-                        <option value="Paint">Paint</option>
-                        <option value="Hardware">Hardware</option>
-                        <option value="General">General</option>
+                        {CATEGORY_OPTIONS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Stock Count</label>
-                      <input type="number" required value={newProduct.stockCount} onChange={e => setNewProduct({...newProduct, stockCount: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Min Price (₹)</label>
@@ -625,24 +622,35 @@ export default function AdminDashboard() {
                           <div>
                             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Category *</label>
                             <select required value={editProductData.category} onChange={e => setEditProductData({...editProductData, category: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
-                              <option value="Electrical">Electrical</option><option value="Pipes">Pipes</option><option value="Tanks">Tanks</option>
-                              <option value="Cement">Cement</option><option value="Paint">Paint</option><option value="Hardware">Hardware</option><option value="General">General</option>
+                              {CATEGORY_OPTIONS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Subcategory *</label>
+                            <input type="text" required value={editProductData.subcategory} onChange={e => setEditProductData({...editProductData, subcategory: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Price *</label>
+                            <input type="number" required value={editProductData.price} onChange={e => setEditProductData({...editProductData, price: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Unit *</label>
+                            <input type="text" required value={editProductData.unit} onChange={e => setEditProductData({...editProductData, unit: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
                           </div>
                           <div>
                             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Qty</label>
                             <input type="number" value={editProductData.stockCount} onChange={e => setEditProductData({...editProductData, stockCount: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
                           </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Description *</label>
-                            <textarea required value={editProductData.description} onChange={e => setEditProductData({...editProductData, description: e.target.value})} rows="1" className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
-                          </div>
                           <div>
                             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>New Image (optional)</label>
                             <input type="file" accept="image/*" onChange={e => setEditProductData({...editProductData, image: e.target.files[0]})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
                           </div>
+                        </div>
+                        <div className="mb-2">
+                          <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Description *</label>
+                          <textarea required value={editProductData.description} onChange={e => setEditProductData({...editProductData, description: e.target.value})} rows="1" className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
                         </div>
                         <div className="flex justify-end pt-2">
                           <button type="submit" disabled={savingEdit} className="btn-primary px-4 py-2 text-sm rounded-lg" style={{ opacity: savingEdit ? 0.7 : 1 }}>
@@ -683,9 +691,10 @@ export default function AdminDashboard() {
                                 name: p.name,
                                 brandName: p.brand?.name || '',
                                 category: p.category,
+                                subcategory: p.subcategory || '',
                                 description: p.description || '',
-                                priceMin: p.priceMin || 0,
-                                priceMax: p.priceMax || 0,
+                                price: p.price || 0,
+                                unit: p.unit || 'piece',
                                 stockCount: p.stockCount || 0,
                                 image: null // Keep null so we don't upload a bad file reference
                               });

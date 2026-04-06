@@ -33,9 +33,10 @@ model Product {
   id           Int             @id @default(autoincrement())
   name         String
   category     String
+  subcategory  String
   description  String?
-  priceMin     Float?
-  priceMax     Float?
+  price        Float
+  unit         String          @default("piece")
   imageUrl     String?
   brandId      Int
   brand        Brand           @relation(fields: [brandId], references: [id])

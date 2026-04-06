@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const rateLimit = require('express-rate-limit');
@@ -13,32 +14,51 @@ const fs = require('fs');
 
 const app = express();
 const prisma = new PrismaClient();
+const isProduction = process.env.NODE_ENV === 'production';
+
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
 
 // Ensure uploads folder exists (Render fix)
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+    fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // ─── Config ────────────────────────────────────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refreshsecretkey456';
-const DEFAULT_GOOGLE_CLIENT_ID = '771978653102-tv01op6h2m1buefjrrjb3g3f65ffgnr5.apps.googleusercontent.com';
+const readSecret = (name) => {
+    const configured = String(process.env[name] || '').trim();
+    if (configured) return configured;
+
+    if (isProduction) {
+        throw new Error(`${name} environment variable is required in production.`);
+    }
+
+    const generated = crypto.randomBytes(32).toString('hex');
+    console.warn(`[config] ${name} is not set. Generated an ephemeral development secret.`);
+    return generated;
+};
+
+const JWT_SECRET = readSecret('JWT_SECRET');
+const JWT_REFRESH_SECRET = readSecret('JWT_REFRESH_SECRET');
 const GOOGLE_CLIENT_IDS = [...new Set(
     [
         process.env.GOOGLE_CLIENT_IDS,
         process.env.GOOGLE_CLIENT_ID,
         process.env.VITE_GOOGLE_CLIENT_ID,
-        DEFAULT_GOOGLE_CLIENT_ID,
     ]
         .flatMap((value) => String(value || '').split(','))
         .map((value) => value.trim())
         .filter(Boolean)
+        .filter((value) => /^[a-z0-9_-]+\.apps\.googleusercontent\.com$/i.test(value))
 )];
 const GOOGLE_CLIENT_ID = GOOGLE_CLIENT_IDS[0] || null;
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID || undefined);
+const googleClient = new OAuth2Client();
 
-const RESERVATION_STATUSES = new Set(['Pending', 'Accepted', 'Rejected', 'Completed']);
+const RESERVATION_STATUS_VALUES = ['Pending', 'Accepted', 'Rejected', 'Completed'];
+const RESERVATION_STATUSES = new Set(RESERVATION_STATUS_VALUES);
+const STOCK_STATUS_VALUES = ['In Stock', 'Out of Stock'];
+const allowedUploadMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
 
 // ─── In-memory OTP store { phone: { otp, expiry } } ────────────────────────
 const otpStore = new Map();
@@ -53,12 +73,19 @@ const configuredOrigins = String(process.env.FRONTEND_URL || '')
 const isAllowedOrigin = (origin) => {
     if (!origin) return true;
     if (configuredOrigins.includes(origin)) return true;
-    if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
-    if (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/i.test(origin)) {
+    if (!isProduction && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/i.test(origin)) {
         return true;
     }
     return false;
 };
+
+app.use((req, res, next) => {
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+});
 
 app.use(cors({
     origin(origin, callback) {
@@ -69,7 +96,7 @@ app.use(cors({
     },
     credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use('/uploads', express.static(uploadDir));
 
 // ─── Multer Storage Config ─────────────────────────────────────────────────
@@ -83,12 +110,21 @@ const storage = multer.diskStorage({
             Date.now() +
             '-' +
             Math.round(Math.random() * 1E9) +
-            path.extname(file.originalname)
+            path.extname(file.originalname).toLowerCase()
         );
     }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter(req, file, cb) {
+        if (!allowedUploadMimeTypes.has(file.mimetype)) {
+            return cb(new Error('Only JPG, PNG, WebP, and AVIF images are allowed.'));
+        }
+        return cb(null, true);
+    },
+});
 
 // ─── Rate Limiters ─────────────────────────────────────────────────────────
 const authLimiter = rateLimit({
@@ -134,23 +170,62 @@ const verifyOtpSchema = z.object({
     otp: z.string().length(6, 'OTP must be 6 digits'),
 });
 
+const parseDateOnly = (value) => {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) return null;
+    const parsed = new Date(`${trimmed}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const reservationSchema = z.object({
     productId: z.number().int().positive(),
     quantity: z.number().int().positive('Quantity must be at least 1'),
-    pickupDate: z.string().min(1, 'Delivery date is required'),
+    pickupDate: z.string().trim().refine((value) => {
+        const parsed = parseDateOnly(value);
+        if (!parsed) return false;
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        return parsed >= startOfToday;
+    }, 'Pickup date must be today or later'),
     phoneNumber: z.string().regex(/^\+?[0-9]{7,15}$/, 'A valid phone number is required to place an order'),
-    notes: z.string().max(500).optional(),
+    notes: z.string().trim().max(500).optional(),
+});
+
+const stockUpdateSchema = z.object({
+    stockStatus: z.enum(STOCK_STATUS_VALUES).optional(),
+    stockCount: z.coerce.number().int().min(0).optional(),
+}).refine((value) => value.stockStatus !== undefined || value.stockCount !== undefined, {
+    message: 'No valid fields to update.',
+});
+
+const productUpsertSchema = z.object({
+    name: z.string().trim().min(2, 'Product name is required.').max(120),
+    category: z.string().trim().min(2, 'Category is required.').max(60),
+    subcategory: z.string().trim().min(2, 'Subcategory is required.').max(80),
+    unit: z.string().trim().min(1, 'Unit is required.').max(30),
+    description: z.string().trim().min(10, 'Description must be at least 10 characters.').max(1000),
+    price: z.coerce.number().positive('Price must be greater than zero.'),
+    brandName: z.string().trim().min(2, 'Brand is required.').max(100),
+    stockCount: z.coerce.number().int().min(0).optional(),
 });
 
 // ─── Validation Middleware Factory ─────────────────────────────────────────
 const validate = (schema) => (req, res, next) => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
-        const msg = result.error.errors.map((e) => e.message).join('; ');
+        const msg = result.error.issues.map((e) => e.message).join('; ');
         return res.status(400).json({ error: msg });
     }
     req.validatedBody = result.data;
     next();
+};
+
+const parseWithSchema = (schema, payload) => {
+    const result = schema.safeParse(payload);
+    if (!result.success) {
+        return { error: result.error.issues.map((issue) => issue.message).join('; ') };
+    }
+    return { data: result.data };
 };
 
 // ─── Auth Middleware ────────────────────────────────────────────────────────
@@ -243,6 +318,44 @@ const updateLastLogin = async (userId) => {
         await prisma.user.update({ where: { id: userId }, data: { lastLoginAt: new Date() } });
     } catch { /* non-critical */ }
 };
+
+const formatCurrency = (value) =>
+    new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0,
+    }).format(Number(value || 0));
+
+const LEGACY_PRODUCT_ALIASES = {
+    'UltraTech PPC': 'PPC Blended Cement',
+    'UltraTech OPC': 'OPC 53 Grade Cement',
+    'KCP Cement': 'OPC 53 Grade Cement',
+    'Walker Cement': 'PPC Blended Cement',
+    'Birla White': 'Acrylic Wall Putty',
+    'Asian Paints (Emulsion)': 'Royal Emulsion Interior Paint',
+    'ACC Primer': 'Royal Emulsion Interior Paint',
+    'Apex Primer': 'WeatherCoat Exterior Paint',
+    'Cooling Paints': 'WeatherCoat Exterior Paint',
+    'Paint Brushes': 'Professional Paint Roller 9-Inch',
+    '1/18 Wire (~1-1.5 sqmm)': 'FR PVC Insulated Wire 1.5 sqmm',
+    'Wire 2.5 sqmm': 'FR PVC Insulated Wire 2.5 sqmm',
+    'Wire 4.0 sqmm': 'FR PVC Insulated Wire 2.5 sqmm',
+    '6A Switch': 'Penta 6A 1-Way Switch',
+    '16A Switch': 'MCB 32A Double Pole',
+    'MCB': 'MCB 32A Double Pole',
+    'Ceiling Fan': 'High Speed Ceiling Fan 1200mm',
+    '3/4 inch CPVC Pipe': 'CPVC SDR 11 Pipe 1-Inch',
+    '1 inch CPVC Pipe': 'CPVC SDR 11 Pipe 1-Inch',
+    'L Bend Fitting': 'Brass Ball Valve 1-Inch',
+    'T Bend Fitting': 'Brass Ball Valve 1-Inch',
+    '3 inch PVC Pipe': 'UPVC Schedule 40 Pipe 2-Inch',
+    '4 inch PVC Pipe': 'UPVC Schedule 40 Pipe 2-Inch',
+    '1000 L Tank': 'Triple Layer Water Tank 1000L',
+};
+
+const resolveRecommendedProductNames = (products) => [...new Set(
+    [...products].map((name) => LEGACY_PRODUCT_ALIASES[name] || name)
+)];
 
 // ═══════════════════════════════════════════════════════════════════════════╗
 //  NOVA AI — Construction Knowledge Engine
@@ -694,10 +807,10 @@ app.patch('/api/products/:id/stock', authenticate, authorize(['ADMIN']), async (
 // ── Add Product (Admin) ─────────────────────────────────────────────────────
 app.post('/api/admin/products', authenticate, authorize(['ADMIN']), upload.single('image'), async (req, res) => {
     try {
-        const { name, category, description, priceMin, priceMax, brandName, stockCount } = req.body;
+        const { name, category, subcategory, unit, description, price, brandName, stockCount } = req.body;
 
-        if (!name || !category || !brandName || !description) {
-            return res.status(400).json({ error: 'Name, category, brand, and description are required.' });
+        if (!name || !category || !subcategory || !unit || !brandName || !description || price === undefined) {
+            return res.status(400).json({ error: 'Name, category, subcategory, unit, price, brand, and description are required.' });
         }
         
         if (!req.file) {
@@ -717,9 +830,10 @@ app.post('/api/admin/products', authenticate, authorize(['ADMIN']), upload.singl
             data: {
                 name,
                 category,
+                subcategory,
                 description: description || null,
-                priceMin: priceMin ? parseFloat(priceMin) : null,
-                priceMax: priceMax ? parseFloat(priceMax) : null,
+                price: parseFloat(price),
+                unit,
                 brandId: brand.id,
                 stockCount: stockCount ? parseInt(stockCount, 10) : 100,
                 imageUrl
@@ -754,10 +868,10 @@ app.put('/api/admin/products/:id', authenticate, authorize(['ADMIN']), upload.si
     if (!Number.isInteger(productId)) return res.status(400).json({ error: 'Invalid product id.' });
     
     try {
-        const { name, category, description, priceMin, priceMax, brandName, stockCount } = req.body;
+        const { name, category, subcategory, unit, description, price, brandName, stockCount } = req.body;
         
-        if (!name || !category || !brandName || !description) {
-            return res.status(400).json({ error: 'Name, category, brand, and description are required.' });
+        if (!name || !category || !subcategory || !unit || !brandName || !description || price === undefined) {
+            return res.status(400).json({ error: 'Name, category, subcategory, unit, price, brand, and description are required.' });
         }
 
         // Upsert Brand
@@ -774,9 +888,10 @@ app.put('/api/admin/products/:id', authenticate, authorize(['ADMIN']), upload.si
         const updateData = {
             name,
             category,
+            subcategory,
             description,
-            priceMin: priceMin ? Number(priceMin) : 0,
-            priceMax: priceMax ? Number(priceMax) : 0,
+            price: parseFloat(price),
+            unit,
             stockCount: stockCount ? parseInt(stockCount, 10) : 0,
             brandId
         };

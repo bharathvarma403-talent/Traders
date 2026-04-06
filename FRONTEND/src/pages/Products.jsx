@@ -15,16 +15,22 @@ const FALLBACK_PRODUCTS = [
   { id: 14, name: 'Ceiling Fan', category: 'Electrical', description: 'Energy efficient ceiling fan', price: 3150, brand: { name: 'Crompton' }, stockStatus: 'In Stock', stockCount: 25 },
   { id: 16, name: '3/4 inch CPVC Pipe', category: 'Pipes', description: 'CPVC pipe (per ft approx.)', price: 33, brand: { name: 'Ashirvad' }, stockStatus: 'In Stock', stockCount: 200 },
   { id: 24, name: '500 L Tank', category: 'Tanks', description: 'Storage tank', price: 4000, brand: { name: 'Nandi' }, stockStatus: 'In Stock', stockCount: 15 },
+  { id: 16, name: '3/4 inch CPVC Pipe', category: 'Plumbing', description: 'CPVC pipe (per ft approx.)', price: 33, brand: { name: 'Ashirvad' }, stockStatus: 'In Stock', stockCount: 200 },
+  { id: 24, name: '500 L Tank', category: 'Plumbing', description: 'Storage tank', price: 4000, brand: { name: 'Nandi' }, stockStatus: 'In Stock', stockCount: 15 },
   { id: 27, name: 'KCP Cement', category: 'Cement', description: 'Price per 50kg bag', price: 385, brand: { name: 'KCP Cement' }, stockStatus: 'In Stock', stockCount: 200 },
   { id: 34, name: 'Asian Paints (Emulsion)', category: 'Paint', description: 'Price per Liter', price: 425, brand: { name: 'Asian Paints' }, stockStatus: 'In Stock', stockCount: 100 },
 ];
 
 const CATEGORY_ICONS = {
   Electrical: '⚡',
-  Pipes: '🔧',
-  Tanks: '💧',
+  Plumbing: '🔧',
   Cement: '🏗️',
   Paint: '🎨',
+  Steel: '🏗️',
+  Sand: '🏜️',
+  Bricks: '🧱',
+  Tools: '🔨',
+  Hardware: '🔩'
 };
 
 export default function Products() {
@@ -170,15 +176,7 @@ export default function Products() {
 
                 <div className="w-24 h-24 mb-4 rounded-2xl flex items-center justify-center overflow-hidden"
                   style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
-                  {['Electrical', 'Pipes', 'Tanks', 'Cement', 'Paint'].includes(cat) ? (
-                    <img
-                      src={`/categories/${cat.toLowerCase()}.png`}
-                      alt={cat}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <span className="text-4xl">{CATEGORY_ICONS[cat] || '📦'}</span>
-                  )}
+                  <span className="text-4xl">{CATEGORY_ICONS[cat] || '📦'}</span>
                 </div>
                 <h3 className="font-semibold text-center text-lg" style={{ color: 'var(--color-text)' }}>{cat}</h3>
               </div>
@@ -220,13 +218,6 @@ export default function Products() {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             style={{ filter: isOutOfStock ? 'grayscale(1)' : 'none' }}
                           />
-                        ) : ['Electrical', 'Pipes', 'Tanks', 'Cement', 'Paint'].includes(product.category) ? (
-                          <img
-                            src={`/categories/${product.category.toLowerCase()}.png`}
-                            alt={product.category}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            style={{ filter: isOutOfStock ? 'grayscale(1)' : 'none' }}
-                          />
                         ) : (
                           <ShieldCheck className="w-8 h-8" style={{ color: 'var(--color-muted)', opacity: 0.6 }} />
                         )}
@@ -250,7 +241,7 @@ export default function Products() {
                         <p className="text-sm flex-grow mb-4" style={{ color: 'var(--color-muted)' }}>{product.description}</p>
 
                         <div className="text-base font-mono font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
-                          ₹{product.price}
+                          ₹{product.price} <span className="text-xs" style={{ color: 'var(--color-muted)' }}>/ {product.unit || 'unit'}</span>
                         </div>
 
                         <button onClick={() => handleReserveClick(product)}
