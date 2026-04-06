@@ -1,6 +1,18 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const prisma = new PrismaClient();
+
+function resolveSeedPassword(envName, label) {
+  const configured = process.env[envName];
+  if (typeof configured === 'string' && configured.trim().length >= 12) {
+    return { password: configured.trim(), source: 'env' };
+  }
+
+  const generated = crypto.randomBytes(12).toString('base64url');
+  console.warn(`[seed] ${envName} is not set. Generated a temporary ${label} password for this run.`);
+  return { password: generated, source: 'generated' };
+}
 
 async function main() {
   console.log('Clearing existing database tables...');
@@ -12,19 +24,26 @@ async function main() {
 
   // ── Seed Admin Account ─────────────────────────────────────────────────
   console.log('Seeding admin account...');
-  const adminPassword = await bcrypt.hash('123456', 12);
+  const adminEmail = String(process.env.SEED_ADMIN_EMAIL || 'vasavi@admin.com').trim().toLowerCase();
+  const adminName = String(process.env.SEED_ADMIN_NAME || 'Vasavi Admin').trim() || 'Vasavi Admin';
+  const adminPhone = String(process.env.SEED_ADMIN_PHONE || '+919912517623').trim() || '+919912517623';
+  const { password: adminPasswordPlain, source: adminPasswordSource } = resolveSeedPassword('SEED_ADMIN_PASSWORD', 'admin');
+  const adminPassword = await bcrypt.hash(adminPasswordPlain, 12);
   await prisma.user.upsert({
-    where: { email: 'Vasavi@admin.com' },
-    update: { password: adminPassword, role: 'ADMIN', name: 'Vasavi Admin' },
+    where: { email: adminEmail },
+    update: { password: adminPassword, role: 'ADMIN', name: adminName, phone: adminPhone },
     create: {
-      name: 'Vasavi Admin',
-      email: 'Vasavi@admin.com',
+      name: adminName,
+      email: adminEmail,
       password: adminPassword,
-      phone: '+919912517623',
+      phone: adminPhone,
       role: 'ADMIN',
     },
   });
-  console.log('Admin seeded: Vasavi@admin.com / 123456');
+  console.log(`Admin seeded: ${adminEmail} (${adminPasswordSource === 'env' ? 'password provided via env' : 'temporary password generated'})`);
+  if (adminPasswordSource === 'generated') {
+    console.log(`Temporary admin password: ${adminPasswordPlain}`);
+  }
 
   // ── Create Brands ──────────────────────────────────────────────────────
   console.log('Seeding top-tier brands and realistic products...');

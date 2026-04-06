@@ -4,11 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "prisma generate && prisma db push --accept-data-loss",
-    "build": "prisma generate && prisma db push --accept-data-loss",
+    "postinstall": "prisma generate",
+    "build": "prisma generate",
+    "db:push": "prisma db push",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "node seed.js",
     "start": "node server.js",
     "seed:auth": "node prisma/seed_auth.js",
-    "dev": "npm run seed:auth && node --watch server.js",
+    "dev": "node --watch server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {

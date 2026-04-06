@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   CheckCircle2, Clock3, Package, RefreshCw, Search, ShieldCheck, XCircle,
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
   const [errorMessage, setErrorMessage] = useState('');
 
   // ── Load Orders ────────────────────────────────────────
-  const loadReservations = async () => {
+  const loadReservations = useCallback(async () => {
     if (!API_URL) {
       setErrorMessage('Backend API URL is not configured (Missing VITE_API_URL).');
       return;
@@ -90,10 +90,10 @@ export default function AdminDashboard() {
     } finally {
       setLoadingOrders(false);
     }
-  };
+  }, [API_URL]);
 
   // ── Load Users ─────────────────────────────────────────
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     if (!API_URL) {
       setErrorMessage('Backend API URL is not configured (Missing VITE_API_URL).');
       return;
@@ -107,10 +107,10 @@ export default function AdminDashboard() {
     } finally {
       setLoadingUsers(false);
     }
-  };
+  }, [API_URL]);
 
   // ── Load Products ──────────────────────────────────────
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     if (!API_URL) {
       setErrorMessage('Backend API URL is not configured (Missing VITE_API_URL).');
       return;
@@ -124,13 +124,13 @@ export default function AdminDashboard() {
     } finally {
       setLoadingProducts(false);
     }
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     loadReservations();
     loadUsers();
     loadProducts();
-  }, [API_URL]);
+  }, [loadReservations, loadUsers, loadProducts]);
 
   // ── Status Update ──────────────────────────────────────
   const handleStatusUpdate = async (id, nextStatus) => {
@@ -563,14 +563,19 @@ export default function AdminDashboard() {
                       </select>
                     </div>
                     <div>
+                      <input required type="text" placeholder="Subcategory *" value={newProduct.subcategory} onChange={e => setNewProduct({...newProduct, subcategory: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Min Price (₹)</label>
-                      <input type="number" value={newProduct.priceMin} onChange={e => setNewProduct({...newProduct, priceMin: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Price *</label>
+                      <input required type="number" min="0" step="0.01" placeholder="Price (INR) *" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Max Price (₹)</label>
-                      <input type="number" value={newProduct.priceMax} onChange={e => setNewProduct({...newProduct, priceMax: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Unit *</label>
+                      <input required type="text" placeholder="Unit (piece, bag, kg) *" value={newProduct.unit} onChange={e => setNewProduct({...newProduct, unit: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Stock Count</label>
+                      <input type="number" min="0" placeholder="Stock Count" value={newProduct.stockCount} onChange={e => setNewProduct({...newProduct, stockCount: e.target.value})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
                     </div>
                   </div>
                   <div>
@@ -579,7 +584,7 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Product Image *</label>
-                    <input required type="file" accept="image/*" onChange={e => setNewProduct({...newProduct, image: e.target.files[0]})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-muted)' }} />
+                    <input required type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={e => setNewProduct({...newProduct, image: e.target.files[0]})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-muted)' }} />
                   </div>
                   <div className="flex justify-end pt-2">
                     <button type="submit" disabled={addingProduct} className="btn-primary flex items-center justify-center min-w-[120px] py-2.5 text-sm" style={{ opacity: addingProduct ? 0.7 : 1 }}>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 import { useToast } from '../utils/ToastContext';
@@ -173,7 +173,9 @@ export default function Login() {
 
   const from = location.state?.from?.pathname || '/';
   const loginMessage = location.state?.message || '';
-  const devAdminHint = import.meta.env.DEV ? 'Local admin: vasavi@admin.com / 123456' : '';
+  const devAdminHint = import.meta.env.DEV
+    ? 'Run npm run seed:auth in BACKEND to generate local login credentials.'
+    : '';
   const googleAuthConfigured =
     typeof import.meta.env.VITE_GOOGLE_CLIENT_ID === 'string' &&
     import.meta.env.VITE_GOOGLE_CLIENT_ID.trim().endsWith('.apps.googleusercontent.com');

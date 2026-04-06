@@ -1,264 +1,337 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { AlertTriangle, ArrowLeft, Search, ShieldCheck, ShoppingCart } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
-import NovaFloatingButton from '../components/NovaFloatingButton';
 import { useAuth } from '../utils/AuthContext';
-import axios from 'axios';
-import { Search, ArrowLeft, ShieldCheck, ShoppingCart, AlertTriangle } from 'lucide-react';
 
-const FALLBACK_PRODUCTS = [
-  { id: 1, name: '1/18 Wire (~1-1.5 sqmm)', category: 'Electrical', description: 'Wires (per meter approx.)', price: 15, brand: { name: 'Havells' }, stockStatus: 'In Stock', stockCount: 500 },
-  { id: 2, name: 'Wire 2.0 sqmm', category: 'Electrical', description: 'Wires (per meter approx.)', price: 24, brand: { name: 'Havells' }, stockStatus: 'In Stock', stockCount: 400 },
-  { id: 3, name: 'Wire 2.5 sqmm', category: 'Electrical', description: 'Wires (per meter approx.)', price: 33, brand: { name: 'Havells' }, stockStatus: 'In Stock', stockCount: 350 },
-  { id: 14, name: 'Ceiling Fan', category: 'Electrical', description: 'Energy efficient ceiling fan', price: 3150, brand: { name: 'Crompton' }, stockStatus: 'In Stock', stockCount: 25 },
-  { id: 16, name: '3/4 inch CPVC Pipe', category: 'Pipes', description: 'CPVC pipe (per ft approx.)', price: 33, brand: { name: 'Ashirvad' }, stockStatus: 'In Stock', stockCount: 200 },
-  { id: 24, name: '500 L Tank', category: 'Tanks', description: 'Storage tank', price: 4000, brand: { name: 'Nandi' }, stockStatus: 'In Stock', stockCount: 15 },
-  { id: 16, name: '3/4 inch CPVC Pipe', category: 'Plumbing', description: 'CPVC pipe (per ft approx.)', price: 33, brand: { name: 'Ashirvad' }, stockStatus: 'In Stock', stockCount: 200 },
-  { id: 24, name: '500 L Tank', category: 'Plumbing', description: 'Storage tank', price: 4000, brand: { name: 'Nandi' }, stockStatus: 'In Stock', stockCount: 15 },
-  { id: 27, name: 'KCP Cement', category: 'Cement', description: 'Price per 50kg bag', price: 385, brand: { name: 'KCP Cement' }, stockStatus: 'In Stock', stockCount: 200 },
-  { id: 34, name: 'Asian Paints (Emulsion)', category: 'Paint', description: 'Price per Liter', price: 425, brand: { name: 'Asian Paints' }, stockStatus: 'In Stock', stockCount: 100 },
-];
-
-const CATEGORY_ICONS = {
-  Electrical: '⚡',
-  Plumbing: '🔧',
-  Cement: '🏗️',
-  Paint: '🎨',
-  Steel: '🏗️',
-  Sand: '🏜️',
-  Bricks: '🧱',
-  Tools: '🔨',
-  Hardware: '🔩'
+const CATEGORY_MARKERS = {
+  Bricks: 'BK',
+  Cement: 'CM',
+  Electrical: 'EL',
+  Hardware: 'HW',
+  Paint: 'PT',
+  Plumbing: 'PL',
+  Sand: 'SD',
+  Steel: 'ST',
+  Tools: 'TL',
 };
 
+const formatPrice = (value) =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
+
 export default function Products() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [revealAnimation, setRevealAnimation] = useState(false);
+  const API_URL = import.meta.env.VITE_API_URL;
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     if (!API_URL) {
-      setProducts(FALLBACK_PRODUCTS);
+      setErrorMessage('Backend API URL is not configured. Add VITE_API_URL to FRONTEND/.env.local.');
       setLoading(false);
       return;
     }
 
-    let isMounted = true;
-    let didTimeout = false;
+    let cancelled = false;
 
-    const timeoutId = setTimeout(() => {
-      if (isMounted) {
-        didTimeout = true;
-        setProducts(FALLBACK_PRODUCTS);
-        setLoading(false);
+    const loadProducts = async () => {
+      setLoading(true);
+      setErrorMessage('');
+
+      try {
+        const { data } = await axios.get(`${API_URL}/api/products`);
+        if (cancelled) return;
+        setProducts(Array.isArray(data) ? data : []);
+      } catch (error) {
+        if (cancelled) return;
+        setProducts([]);
+        setErrorMessage(error?.response?.data?.error || 'Unable to load the materials catalog right now.');
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    }, 3000);
+    };
 
-    axios.get(`${API_URL}/api/products`)
-      .then(res => {
-        if (!isMounted || didTimeout) return;
-        clearTimeout(timeoutId);
-        if (res.data && res.data.length > 0) {
-            const mapped = res.data.map(p => ({
-            ...p,
-            price: Math.round((p.priceMin + p.priceMax) / 2),
-            }));
-            setProducts(mapped);
-        } else {
-            setProducts(FALLBACK_PRODUCTS);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!isMounted || didTimeout) return;
-        clearTimeout(timeoutId);
-        setProducts(FALLBACK_PRODUCTS);
-        setLoading(false);
-      });
+    loadProducts();
 
     return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
+      cancelled = true;
     };
   }, [API_URL]);
 
-  const categories = [...new Set(products.map(p => p.category))].sort();
+  const categories = [...new Set(products.map((product) => product.category).filter(Boolean))].sort();
 
-  const handleCategoryClick = (cat) => {
-    setSelectedCategory(cat);
-    setSearchTerm('');
-    setRevealAnimation(false);
-    setTimeout(() => setRevealAnimation(true), 50);
-  };
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
+    const query = searchTerm.trim().toLowerCase();
+    const haystack = [product.name, product.description, product.brand?.name]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
 
-  const filteredProducts = products.filter(p =>
-    (selectedCategory ? p.category === selectedCategory : true) &&
-    (p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.brand?.name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+    return matchesCategory && (!query || haystack.includes(query));
+  });
 
   const handleReserveClick = (product) => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: { pathname: '/products' }, message: 'Please log in to place an order.' } });
+      navigate('/login', {
+        state: {
+          from: { pathname: '/products' },
+          message: 'Please sign in to place an order.',
+        },
+      });
       return;
     }
+
     if (product.stockStatus === 'Out of Stock') return;
     setSelectedProduct(product);
     setIsModalOpen(true);
   };
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="flex min-h-screen flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
       <Navbar />
 
-      <main className="flex-grow py-12 px-6 max-w-7xl mx-auto w-full">
-
-        {/* Header */}
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 py-12">
         <div className="mb-10">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Materials <span style={{ color: 'var(--color-accent)' }}>Catalog</span></h1>
-          <p className="text-sm mt-1.5" style={{ color: 'var(--color-muted)' }}>Browse construction materials by category</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
+            Materials <span style={{ color: 'var(--color-accent)' }}>Catalog</span>
+          </h1>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--color-muted)' }}>
+            Browse verified products from the live catalog.
+          </p>
         </div>
 
-        {/* Search & Back */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8 items-stretch sm:items-center">
-          {selectedCategory && (
-            <button onClick={() => { setSelectedCategory(null); setSearchTerm(''); setRevealAnimation(false); }}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all shrink-0"
-              style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(75,124,243,0.4)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--color-border)'}>
-              <ArrowLeft className="w-4 h-4" /> All Categories
+        {errorMessage && (
+          <div
+            className="mb-6 rounded-2xl px-5 py-4 text-sm"
+            style={{
+              background: 'rgba(248,113,113,0.08)',
+              border: '1px solid rgba(248,113,113,0.22)',
+              color: '#fecaca',
+            }}
+          >
+            {errorMessage}
+          </div>
+        )}
+
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
+          {selectedCategory ? (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategory('');
+                setSearchTerm('');
+              }}
+              className="flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all sm:w-auto"
+              style={{
+                background: 'var(--color-surface)',
+                color: 'var(--color-text)',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              All Categories
             </button>
-          )}
-          {selectedCategory && (
-            <div className="relative flex-1">
-              <label htmlFor="product-search" className="sr-only">Search products or brands</label>
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-muted)' }} />
-              <input id="product-search" type="text"
-                placeholder={`Search in ${selectedCategory}...`}
-                value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm focus:outline-none"
-                style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
-            </div>
-          )}
+          ) : null}
+
+          <div className="relative flex-1">
+            <label htmlFor="product-search" className="sr-only">
+              Search products, descriptions, or brands
+            </label>
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+              style={{ color: 'var(--color-muted)' }}
+            />
+            <input
+              id="product-search"
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder={selectedCategory ? `Search in ${selectedCategory}...` : 'Search all products...'}
+              className="w-full rounded-lg py-2.5 pl-10 pr-4 text-sm focus:outline-none"
+              style={{
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text)',
+              }}
+            />
+          </div>
         </div>
 
-        {/* Main Content */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-accent)' }}></div>
+            <div
+              className="h-8 w-8 animate-spin rounded-full border-b-2"
+              style={{ borderColor: 'var(--color-accent)' }}
+            />
           </div>
-
         ) : !selectedCategory ? (
-          /* ── CATEGORY GRID ── */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {categories.map(cat => (
-              <div key={cat} onClick={() => handleCategoryClick(cat)}
-                className="flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:-translate-y-1 group p-6 rounded-2xl"
-                style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'rgba(75,124,243,0.4)';
-                  e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.15)';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'var(--color-border)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}>
-
-                <div className="w-24 h-24 mb-4 rounded-2xl flex items-center justify-center overflow-hidden"
-                  style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
-                  <span className="text-4xl">{CATEGORY_ICONS[cat] || '📦'}</span>
-                </div>
-                <h3 className="font-semibold text-center text-lg" style={{ color: 'var(--color-text)' }}>{cat}</h3>
-              </div>
-            ))}
-          </div>
-
+          categories.length === 0 ? (
+            <div
+              className="rounded-3xl border border-dashed px-6 py-16 text-center text-sm"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-muted)' }}
+            >
+              No products are available in the catalog yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    setSearchTerm('');
+                  }}
+                  className="group flex flex-col items-center justify-center rounded-2xl p-6 text-center transition-all duration-300 hover:-translate-y-1"
+                  style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                >
+                  <div
+                    className="mb-4 flex h-24 w-24 items-center justify-center rounded-2xl text-lg font-semibold tracking-[0.2em]"
+                    style={{
+                      background: 'var(--color-bg)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-accent)',
+                    }}
+                  >
+                    {CATEGORY_MARKERS[category] || category.slice(0, 2).toUpperCase()}
+                  </div>
+                  <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
+                    {category}
+                  </h2>
+                </button>
+              ))}
+            </div>
+          )
         ) : (
-          /* ── PRODUCTS LIST ── */
           <>
-            <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--color-text)' }}>
+            <h2 className="mb-6 text-xl font-semibold" style={{ color: 'var(--color-text)' }}>
               {selectedCategory}
             </h2>
 
             {filteredProducts.length === 0 ? (
-              <p className="text-center py-20 text-sm" style={{ color: 'var(--color-muted)' }}>No products found.</p>
+              <p className="py-20 text-center text-sm" style={{ color: 'var(--color-muted)' }}>
+                No products match your search in this category.
+              </p>
             ) : (
-              <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 ${revealAnimation ? 'products-reveal' : 'opacity-0'}`}>
-                {filteredProducts.map((product, index) => {
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredProducts.map((product) => {
                   const isOutOfStock = product.stockStatus === 'Out of Stock';
+                  const imageSrc = product.imageUrl?.startsWith('/uploads')
+                    ? `${API_URL}${product.imageUrl}`
+                    : product.imageUrl;
+
                   return (
-                    <div key={product.id}
-                      className="flex flex-col overflow-hidden transition-all duration-300 group rounded-2xl product-card"
+                    <article
+                      key={product.id}
+                      className="flex flex-col overflow-hidden rounded-2xl transition-all duration-300"
                       style={{
                         background: 'var(--color-surface)',
                         border: '1px solid var(--color-border)',
-                        opacity: isOutOfStock ? 0.6 : 1,
-                        animationDelay: `${index * 60}ms`,
+                        opacity: isOutOfStock ? 0.7 : 1,
                       }}
-                      onMouseEnter={e => { if (!isOutOfStock) e.currentTarget.style.borderColor = 'rgba(75,124,243,0.4)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}>
-
-                      {/* Product Image */}
-                      <div className="h-40 flex items-center justify-center overflow-hidden relative"
-                        style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
-                        {product.imageUrl ? (
+                    >
+                      <div
+                        className="relative flex h-44 items-center justify-center overflow-hidden"
+                        style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}
+                      >
+                        {imageSrc ? (
                           <img
-                            src={product.imageUrl.startsWith('/uploads') ? `${API_URL}${product.imageUrl}` : product.imageUrl}
+                            src={imageSrc}
                             alt={product.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-cover"
                             style={{ filter: isOutOfStock ? 'grayscale(1)' : 'none' }}
                           />
                         ) : (
-                          <ShieldCheck className="w-8 h-8" style={{ color: 'var(--color-muted)', opacity: 0.6 }} />
+                          <ShieldCheck className="h-8 w-8" style={{ color: 'var(--color-muted)', opacity: 0.7 }} />
                         )}
-                        {isOutOfStock && (
-                          <div className="absolute inset-0 flex items-center justify-center"
-                            style={{ background: 'rgba(0,0,0,0.5)' }}>
-                            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider"
-                              style={{ background: 'rgba(248,113,113,0.2)', border: '1px solid rgba(248,113,113,0.3)', color: '#fca5a5' }}>
-                              <AlertTriangle className="w-3.5 h-3.5" /> Out of Stock
+
+                        {isOutOfStock ? (
+                          <div
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ background: 'rgba(0,0,0,0.52)' }}
+                          >
+                            <span
+                              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wider"
+                              style={{
+                                background: 'rgba(248,113,113,0.2)',
+                                border: '1px solid rgba(248,113,113,0.3)',
+                                color: '#fca5a5',
+                              }}
+                            >
+                              <AlertTriangle className="h-3.5 w-3.5" />
+                              Out of Stock
                             </span>
                           </div>
-                        )}
+                        ) : null}
                       </div>
 
-                      <div className="p-5 flex-grow flex flex-col">
-                        <div className="flex justify-between items-start mb-3">
-                          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>{product.category}</span>
-                          <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'var(--color-bg)', color: 'var(--color-muted)', border: '1px solid var(--color-border)' }}>{product.brand?.name}</span>
+                      <div className="flex flex-1 flex-col p-5">
+                        <div className="mb-3 flex items-start justify-between gap-3">
+                          <span
+                            className="text-xs font-semibold uppercase tracking-wider"
+                            style={{ color: 'var(--color-accent)' }}
+                          >
+                            {product.category}
+                          </span>
+                          <span
+                            className="rounded px-2 py-0.5 text-xs"
+                            style={{
+                              background: 'var(--color-bg)',
+                              color: 'var(--color-muted)',
+                              border: '1px solid var(--color-border)',
+                            }}
+                          >
+                            {product.brand?.name || 'Unbranded'}
+                          </span>
                         </div>
-                        <h3 className="font-semibold mb-1.5" style={{ color: 'var(--color-text)' }}>{product.name}</h3>
-                        <p className="text-sm flex-grow mb-4" style={{ color: 'var(--color-muted)' }}>{product.description}</p>
 
-                        <div className="text-base font-mono font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
-                          ₹{product.price} <span className="text-xs" style={{ color: 'var(--color-muted)' }}>/ {product.unit || 'unit'}</span>
+                        <h3 className="mb-1.5 font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {product.name}
+                        </h3>
+                        <p className="mb-4 flex-1 text-sm" style={{ color: 'var(--color-muted)' }}>
+                          {product.description || 'No description available.'}
+                        </p>
+
+                        <div className="mb-4 text-base font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {formatPrice(product.price)}
+                          <span className="ml-1 text-xs" style={{ color: 'var(--color-muted)' }}>
+                            / {product.unit || 'unit'}
+                          </span>
                         </div>
 
-                        <button onClick={() => handleReserveClick(product)}
+                        <button
+                          type="button"
+                          onClick={() => handleReserveClick(product)}
                           disabled={isOutOfStock}
-                          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all"
+                          className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-all"
                           style={{
                             background: isOutOfStock ? 'var(--color-border)' : 'var(--color-accent)',
-                            color: isOutOfStock ? 'var(--color-muted)' : 'white',
+                            color: isOutOfStock ? 'var(--color-muted)' : '#1a1500',
                             cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                           }}
-                          onMouseEnter={e => { if (!isOutOfStock) e.currentTarget.style.opacity = '0.85'; }}
-                          onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}>
-                          <ShoppingCart className="w-4 h-4" />
+                        >
+                          <ShoppingCart className="h-4 w-4" />
                           {isOutOfStock ? 'Out of Stock' : 'Order Now'}
                         </button>
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
@@ -268,8 +341,11 @@ export default function Products() {
       </main>
 
       <Footer />
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} product={selectedProduct} />
-      <NovaFloatingButton />
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        product={selectedProduct}
+      />
     </div>
   );
 }

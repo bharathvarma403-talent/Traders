@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { ClipboardList, Package, Clock3, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import NovaFloatingButton from '../components/NovaFloatingButton';
 import { useAuth } from '../utils/AuthContext';
 
 const getStatusStyles = (status) => {
@@ -47,7 +46,7 @@ export default function Orders() {
     if (silent) setRefreshing(true); else setLoading(true);
 
     try {
-      const { data } = await axios.get(`${API_URL}/api/reservations`, { params: { userId: user.id } });
+      const { data } = await axios.get(`${API_URL}/api/reservations`);
       setOrders(data);
     } catch {
       // silently fail on poll
@@ -189,7 +188,6 @@ export default function Orders() {
       </main>
 
       <Footer />
-      <NovaFloatingButton />
     </div>
   );
 }

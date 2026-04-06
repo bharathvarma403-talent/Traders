@@ -1,119 +1,87 @@
-# 🚀 Deployment Guide — Vasavi Traders
+# Deployment Guide
 
-## Architecture
+## Recommended Architecture
 
+- Frontend: Vercel
+- Backend API: Render, Railway, Fly.io, or another Node host
+- Database: Managed PostgreSQL
+- Static uploads: local disk for development only; move to object storage for production if uploads must persist across redeploys
+
+## Backend Deployment
+
+Deploy the `BACKEND` folder as a Node service.
+
+Suggested commands:
+
+- Build command: `npm install && npm run build`
+- Start command: `npm start`
+
+Required environment variables:
+
+```env
+NODE_ENV=production
+PORT=4000
+DATABASE_URL=postgresql://...
+FRONTEND_URL=https://your-frontend-domain.vercel.app
+JWT_SECRET=long-random-secret
+JWT_REFRESH_SECRET=second-long-random-secret
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
-GitHub Repo
-│
-├── FRONTEND/ ──► Vercel   (React + Vite)
-└── BACKEND/  ──► Render   (Node.js + Express + SQLite)
+
+Optional one-time admin bootstrap:
+
+```env
+BOOTSTRAP_ADMIN_NAME=Production Admin
+BOOTSTRAP_ADMIN_EMAIL=admin@yourdomain.com
+BOOTSTRAP_ADMIN_PASSWORD=use-a-strong-password-here
 ```
 
----
+Important:
 
-## Part 1: Deploy Backend to Render
+- The server no longer creates a default admin automatically unless the bootstrap admin env vars are set.
+- Run `npx prisma migrate deploy` for production migrations, or `npx prisma db push` only for controlled non-production environments.
+- Do not use SQLite for production. The app is now configured for PostgreSQL.
+- Local disk uploads can be lost on stateless deployments. For production-grade persistence, move uploads to S3, Cloudinary, or another object store.
 
-### Step 1 — Create a Render account
+## Frontend Deployment
 
-Sign up at [render.com](https://render.com).
+Deploy the `FRONTEND` folder as a Vite app.
 
-### Step 2 — New Web Service
+Required environment variables:
 
-1. Dashboard → **New → Web Service**
-2. Connect your GitHub repository
-3. Configure:
-   - **Root Directory:** `BACKEND`
-   - **Runtime:** Node
-   - **Build Command:** `npm install && npx prisma generate`
-   - **Start Command:** `npm start`
-   - **Node Version:** 18 (set in Environment)
+```env
+VITE_API_URL=https://your-backend-domain.com
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+```
 
-### Step 3 — Set Environment Variables on Render
+## Google OAuth Setup
 
-Add the following in **Environment → Add Environment Variable**:
+In Google Cloud Console, add:
 
-| Key | Value |
-|-----|-------|
-| `NODE_ENV` | `production` |
-| `JWT_SECRET` | (generate: `openssl rand -base64 32`) |
-| `JWT_REFRESH_SECRET` | (generate: `openssl rand -base64 32`) |
-| `GOOGLE_CLIENT_ID` | Your Google OAuth Client ID |
-| `FRONTEND_URL` | `https://your-app.vercel.app` |
-| `PORT` | `4000` |
+- Local origin: `http://localhost:5173`
+- Production origin: `https://your-frontend-domain.vercel.app`
 
-### Step 4 — Deploy
+If you use redirect-based flows later, also add the matching redirect URI.
 
-Click **Deploy Web Service**. Render will build and start the server.
+## Production Checklist
 
-Note your **Backend URL**: `https://your-backend.onrender.com`
+- Backend starts without falling back to generated secrets.
+- `JWT_SECRET` and `JWT_REFRESH_SECRET` are both set.
+- `FRONTEND_URL` exactly matches the deployed frontend origin.
+- Database migrations have been applied successfully.
+- Admin account exists through bootstrap env vars or a controlled seed process.
+- Product image uploads are backed by persistent storage if needed.
+- Frontend uses the live backend `VITE_API_URL`.
+- Google Sign-In works on the final domain.
+- Reservation listing is verified for both admin and normal users.
 
-> ⚠️ SQLite on Render uses the ephemeral disk — data resets on each deploy. For production persistence, switch to **PostgreSQL** (change `schema.prisma` provider to `postgresql` and update `DATABASE_URL`).
+## Post-Deploy Smoke Tests
 
----
-
-## Part 2: Deploy Frontend to Vercel
-
-### Step 1 — Create a Vercel account
-
-Sign up at [vercel.com](https://vercel.com).
-
-### Step 2 — Import Project
-
-1. Dashboard → **Add New → Project**
-2. Import your GitHub repository
-3. Configure:
-   - **Framework Preset:** Vite
-   - **Root Directory:** `FRONTEND`
-   - Leave build commands as auto-detected
-
-### Step 3 — Set Environment Variables on Vercel
-
-In **Settings → Environment Variables**:
-
-| Key | Value |
-|-----|-------|
-| `VITE_API_URL` | `https://your-backend.onrender.com` |
-| `VITE_GOOGLE_CLIENT_ID` | Your Google OAuth Client ID |
-
-### Step 4 — Deploy
-
-Click **Deploy**. Your frontend will be live at `https://your-app.vercel.app`.
-
----
-
-## Part 3: Update Google OAuth Origins
-
-Go back to [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials):
-
-1. Edit your OAuth 2.0 Client ID
-2. Add to **Authorized JavaScript origins**:
-   - `https://your-app.vercel.app`
-3. Add to **Authorized redirect URIs** (only if using redirect flow):
-   - `https://your-app.vercel.app`
-4. Save.
-
----
-
-## Part 4: Post-Deployment Checklist
-
-- [ ] Backend `/api/products` returns data
-- [ ] Frontend loads and connects to backend
-- [ ] Google Sign-In works on the live URL
-- [ ] Admin login works (`admin@vasavitraders.com` / `admin123`)
-- [ ] Users can register, place orders, track status
-- [ ] Admin can see all orders with email and update status
-
----
-
-## Upgrading from SQLite → PostgreSQL (Recommended for Production)
-
-1. Update `BACKEND/prisma/schema.prisma`:
-   ```prisma
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
-   ```
-2. Add `DATABASE_URL` on Render pointing to a Render PostgreSQL instance
-3. Run `npx prisma migrate deploy` on first deploy
-4. Run `node seed.js` to seed admin user and products
+- Load `/products` and confirm catalog data renders.
+- Log in as a normal user and place a reservation.
+- Confirm the user can only see their own reservations.
+- Log in as an admin and confirm admin dashboard access works.
+- Update a reservation status and verify the customer view reflects it.
+- Create and edit a product with an image upload.
+- Confirm browser console is clean during the main flows.

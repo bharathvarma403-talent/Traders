@@ -490,14 +490,15 @@ const processNovaQuery = async (query) => {
     let productDetails = [];
     if (recommendedProducts.size > 0) {
         try {
+            const resolvedNames = resolveRecommendedProductNames(recommendedProducts);
             const products = await prisma.product.findMany({
-                where: { name: { in: [...recommendedProducts] } },
+                where: { name: { in: resolvedNames } },
                 include: { brand: true },
             });
             productDetails = products.map(p => ({
                 name: p.name,
                 brand: p.brand?.name,
-                price: `₹${p.priceMin}-${p.priceMax}`,
+                price: formatCurrency(p.price),
                 inStock: p.stockStatus === 'In Stock',
             }));
         } catch { /* non-critical */ }
@@ -537,8 +538,11 @@ app.post('/api/auth/register', authLimiter, validate(registerSchema), async (req
         const existingUser = existingEmail || existingPhone;
 
         if (existingUser) {
-            // Auto Login if valid password
-            const isMatch = await bcrypt.compare(password, existingUser.password);
+            // Auto-login only when the existing account has a local password.
+            const isMatch = existingUser.password
+                ? await bcrypt.compare(password, existingUser.password)
+                : false;
+
             if (isMatch) {
                 // Update last login
                 await prisma.user.update({ where: { id: existingUser.id }, data: { lastLoginAt: new Date() } });
@@ -550,9 +554,14 @@ app.post('/api/auth/register', authLimiter, validate(registerSchema), async (req
                     refreshToken, 
                     user: safeUser(existingUser) 
                 });
-            } else {
-                return res.status(409).json({ error: 'Welcome back! An account already exists. Please log in with the correct password.', redirectToLogin: true });
             }
+
+            return res.status(409).json({
+                error: existingUser.googleId
+                    ? 'An account already exists for this email. Please sign in with Google or use the correct local password.'
+                    : 'Welcome back! An account already exists. Please log in with the correct password.',
+                redirectToLogin: true,
+            });
         }
 
         const hashed = await bcrypt.hash(password, 12);
@@ -693,10 +702,12 @@ app.post('/api/auth/send-otp', otpLimiter, validate(sendOtpSchema), async (req, 
     const expiry = Date.now() + OTP_EXPIRY_MS;
     otpStore.set(phone, { otp, expiry });
 
-    console.log(`[OTP] Phone: ${phone} → OTP: ${otp} (expires in 5 min)`);
+    if (!isProduction) {
+        console.log(`[OTP] Phone: ${phone} -> OTP: ${otp} (expires in 5 min)`);
+    }
     res.json({
         message: 'OTP sent successfully.',
-        ...(process.env.NODE_ENV !== 'production' && { dev_otp: otp }),
+        ...(!isProduction && { dev_otp: otp }),
     });
 });
 
@@ -773,7 +784,10 @@ app.get('/api/auth/me', authenticate, async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════╝
 app.get('/api/products', async (req, res) => {
     try {
-        const products = await prisma.product.findMany({ include: { brand: true } });
+        const products = await prisma.product.findMany({
+            include: { brand: true },
+            orderBy: [{ category: 'asc' }, { name: 'asc' }],
+        });
         res.json(products);
     } catch (err) {
         console.error('GET /api/products error:', err);
@@ -784,15 +798,21 @@ app.get('/api/products', async (req, res) => {
 // ── Stock Management (Admin) ────────────────────────────────────────────────
 app.patch('/api/products/:id/stock', authenticate, authorize(['ADMIN']), async (req, res) => {
     const productId = Number(req.params.id);
-    const { stockStatus, stockCount } = req.body;
-
     if (!Number.isInteger(productId)) return res.status(400).json({ error: 'Invalid product id.' });
 
-    const data = {};
-    if (stockStatus && ['In Stock', 'Out of Stock'].includes(stockStatus)) data.stockStatus = stockStatus;
-    if (stockCount !== undefined && Number.isInteger(Number(stockCount))) data.stockCount = Number(stockCount);
+    const parsed = parseWithSchema(stockUpdateSchema, req.body);
+    if (parsed.error) {
+        return res.status(400).json({ error: parsed.error });
+    }
 
-    if (Object.keys(data).length === 0) return res.status(400).json({ error: 'No valid fields to update.' });
+    const data = {};
+    if (parsed.data.stockStatus !== undefined) data.stockStatus = parsed.data.stockStatus;
+    if (parsed.data.stockCount !== undefined) {
+        data.stockCount = parsed.data.stockCount;
+        if (parsed.data.stockStatus === undefined) {
+            data.stockStatus = parsed.data.stockCount > 0 ? 'In Stock' : 'Out of Stock';
+        }
+    }
 
     try {
         const updated = await prisma.product.update({ where: { id: productId }, data, include: { brand: true } });
@@ -807,15 +827,16 @@ app.patch('/api/products/:id/stock', authenticate, authorize(['ADMIN']), async (
 // ── Add Product (Admin) ─────────────────────────────────────────────────────
 app.post('/api/admin/products', authenticate, authorize(['ADMIN']), upload.single('image'), async (req, res) => {
     try {
-        const { name, category, subcategory, unit, description, price, brandName, stockCount } = req.body;
-
-        if (!name || !category || !subcategory || !unit || !brandName || !description || price === undefined) {
-            return res.status(400).json({ error: 'Name, category, subcategory, unit, price, brand, and description are required.' });
-        }
-        
         if (!req.file) {
             return res.status(400).json({ error: 'Product image is required.' });
         }
+
+        const parsed = parseWithSchema(productUpsertSchema, req.body);
+        if (parsed.error) {
+            return res.status(400).json({ error: parsed.error });
+        }
+
+        const { name, category, subcategory, unit, description, price, brandName, stockCount } = parsed.data;
 
         // Upsert Brand
         const brand = await prisma.brand.upsert({
@@ -832,11 +853,12 @@ app.post('/api/admin/products', authenticate, authorize(['ADMIN']), upload.singl
                 category,
                 subcategory,
                 description: description || null,
-                price: parseFloat(price),
+                price,
                 unit,
                 brandId: brand.id,
-                stockCount: stockCount ? parseInt(stockCount, 10) : 100,
-                imageUrl
+                stockCount: stockCount ?? 100,
+                stockStatus: (stockCount ?? 100) > 0 ? 'In Stock' : 'Out of Stock',
+                imageUrl,
             },
             include: { brand: true }
         });
@@ -868,11 +890,12 @@ app.put('/api/admin/products/:id', authenticate, authorize(['ADMIN']), upload.si
     if (!Number.isInteger(productId)) return res.status(400).json({ error: 'Invalid product id.' });
     
     try {
-        const { name, category, subcategory, unit, description, price, brandName, stockCount } = req.body;
-        
-        if (!name || !category || !subcategory || !unit || !brandName || !description || price === undefined) {
-            return res.status(400).json({ error: 'Name, category, subcategory, unit, price, brand, and description are required.' });
+        const parsed = parseWithSchema(productUpsertSchema, req.body);
+        if (parsed.error) {
+            return res.status(400).json({ error: parsed.error });
         }
+
+        const { name, category, subcategory, unit, description, price, brandName, stockCount } = parsed.data;
 
         // Upsert Brand
         let brandId = null;
@@ -890,9 +913,10 @@ app.put('/api/admin/products/:id', authenticate, authorize(['ADMIN']), upload.si
             category,
             subcategory,
             description,
-            price: parseFloat(price),
+            price,
             unit,
-            stockCount: stockCount ? parseInt(stockCount, 10) : 0,
+            stockCount: stockCount ?? 0,
+            stockStatus: (stockCount ?? 0) > 0 ? 'In Stock' : 'Out of Stock',
             brandId
         };
 
@@ -926,14 +950,14 @@ app.post('/api/reservations', authenticate, async (req, res) => {
 
     const result = reservationSchema.safeParse(body);
     if (!result.success) {
-        const msg = result.error.errors.map((e) => e.message).join('; ');
+        const msg = result.error.issues.map((e) => e.message).join('; ');
         return res.status(400).json({ error: msg });
     }
 
     const { productId, quantity, pickupDate, phoneNumber, notes } = result.data;
 
     try {
-        const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { name: true, email: true, phone: true } });
+        const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { id: true, name: true, email: true, phone: true } });
         if (!user) return res.status(404).json({ error: 'User not found.' });
 
         const phoneToUse = phoneNumber || user.phone;
@@ -943,6 +967,33 @@ app.post('/api/reservations', authenticate, async (req, res) => {
         const product = await prisma.product.findUnique({ where: { id: productId } });
         if (!product) return res.status(404).json({ error: 'Product not found.' });
         if (product.stockStatus === 'Out of Stock') return res.status(400).json({ error: 'This product is currently out of stock.' });
+        if (quantity > product.stockCount) {
+            return res.status(400).json({ error: `Only ${product.stockCount} unit(s) are currently available.` });
+        }
+
+        if (phoneToUse !== user.phone) {
+            const conflictingUser = await prisma.user.findFirst({
+                where: {
+                    phone: phoneToUse,
+                    NOT: { id: user.id },
+                },
+                select: { id: true },
+            });
+
+            if (conflictingUser) {
+                return res.status(409).json({ error: 'That phone number is already linked to another account.' });
+            }
+
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { phone: phoneToUse },
+            });
+        }
+
+        const pickupDateValue = parseDateOnly(pickupDate);
+        if (!pickupDateValue) {
+            return res.status(400).json({ error: 'Pickup date must be valid.' });
+        }
 
         const reservation = await prisma.reservation.create({
             data: {
@@ -952,7 +1003,7 @@ app.post('/api/reservations', authenticate, async (req, res) => {
                 userId: req.user.id,
                 productId,
                 quantity,
-                pickupDate: new Date(pickupDate),
+                pickupDate: pickupDateValue,
                 notes: notes || null,
             },
         });
@@ -964,17 +1015,22 @@ app.post('/api/reservations', authenticate, async (req, res) => {
     }
 });
 
-app.get('/api/reservations', async (req, res) => {
+app.get('/api/reservations', authenticate, async (req, res) => {
     const phone = String(req.query.phone || '').trim();
     const status = String(req.query.status || '').trim();
     const userId = req.query.userId ? Number(req.query.userId) : null;
     const where = {};
 
-    if (phone) where.phone = phone;
-    if (userId) where.userId = userId;
     if (status) {
         if (!RESERVATION_STATUSES.has(status)) return res.status(400).json({ error: 'Invalid status.' });
         where.status = status;
+    }
+
+    if (req.user.role === 'ADMIN') {
+        if (phone) where.phone = phone;
+        if (userId) where.userId = userId;
+    } else {
+        where.userId = req.user.id;
     }
 
     try {
@@ -1058,28 +1114,44 @@ app.get('/api/health', (req, res) => {
 // ─── Global Error Handler ────────────────────────────────────────────────────
 app.use((err, req, res, _next) => {
     console.error('Unhandled error:', err);
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: err.message });
+    }
+    if (err.message?.includes('Only JPG, PNG, WebP, and AVIF images are allowed.')) {
+        return res.status(400).json({ error: err.message });
+    }
+    if (err.message?.includes('not allowed by CORS')) {
+        return res.status(403).json({ error: 'Request origin is not allowed.' });
+    }
     res.status(500).json({ error: 'An unexpected error occurred.' });
 });
 
 // ─── Ensure Default Admin Exists ───────────────────────────────────────────
 const ensureAdminExists = async () => {
     try {
-        const adminEmail = 'vasavi@admin.com';
+        const adminEmail = normalizeEmail(process.env.BOOTSTRAP_ADMIN_EMAIL || '');
+        const adminPassword = String(process.env.BOOTSTRAP_ADMIN_PASSWORD || '');
+        const adminName = String(process.env.BOOTSTRAP_ADMIN_NAME || 'Vasavi Admin').trim() || 'Vasavi Admin';
+
+        if (!adminEmail || !adminPassword) {
+            return;
+        }
+
         const existingAdmin = await prisma.user.findFirst({ where: { email: { equals: adminEmail, mode: 'insensitive' } } });
         if (!existingAdmin) {
-            const hashed = await bcrypt.hash('123456', 12);
+            const hashed = await bcrypt.hash(adminPassword, 12);
             await prisma.user.create({
                 data: {
-                    name: 'Vasavi Admin',
+                    name: adminName,
                     email: adminEmail,
                     password: hashed,
                     role: 'ADMIN'
                 }
             });
-            console.log('Created default admin: vasavi@admin.com');
+            console.log(`Created bootstrap admin: ${adminEmail}`);
         }
     } catch (err) {
-        console.error('Failed to create default admin:', err.message);
+        console.error('Failed to create bootstrap admin:', err.message);
     }
 };
 

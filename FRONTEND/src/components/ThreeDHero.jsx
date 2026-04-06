@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function ThreeDHero() {
   return (
     <div className="w-full h-full relative flex items-center justify-center overflow-hidden" style={{ minHeight: '400px' }}>
