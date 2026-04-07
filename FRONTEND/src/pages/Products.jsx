@@ -31,8 +31,16 @@ export default function Products() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(() => {
+    try {
+      const cached = localStorage.getItem('vt_catalog_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(products.length === 0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -49,19 +57,35 @@ export default function Products() {
     let cancelled = false;
 
     const loadProducts = async () => {
-      setLoading(true);
+      // Only show full loading spinner if we have no cached data
+      if (products.length === 0) setLoading(true);
+      else setIsRefreshing(true);
+      
       setErrorMessage('');
 
       try {
         const { data } = await axios.get(`${API_URL}/api/products`);
         if (cancelled) return;
-        setProducts(Array.isArray(data) ? data : []);
+        
+        const productsData = Array.isArray(data) ? data : [];
+        setProducts(productsData);
+        
+        // Cache the result for instant load next time
+        localStorage.setItem('vt_catalog_cache', JSON.stringify(productsData));
       } catch (error) {
         if (cancelled) return;
-        setProducts([]);
-        setErrorMessage(error?.response?.data?.error || 'Unable to load the materials catalog right now.');
+        // If we have cached data, don't clear it on error, just warn the user
+        if (products.length === 0) {
+          setProducts([]);
+          setErrorMessage(error?.response?.data?.error || 'Unable to load the materials catalog right now.');
+        } else {
+          console.warn('Background refresh failed, using cached data:', error);
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setIsRefreshing(false);
+        }
       }
     };
 
@@ -112,6 +136,11 @@ export default function Products() {
           </h1>
           <p className="mt-1.5 text-sm" style={{ color: 'var(--color-muted)' }}>
             Browse verified products from the live catalog.
+            {isRefreshing && (
+              <span className="ml-3 animate-pulse text-xs italic" style={{ color: 'var(--color-accent)' }}>
+                • Updating live stock...
+              </span>
+            )}
           </p>
         </div>
 
@@ -231,9 +260,16 @@ export default function Products() {
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredProducts.map((product) => {
                   const isOutOfStock = product.stockStatus === 'Out of Stock';
-                  const imageSrc = product.imageUrl?.startsWith('/uploads')
+                  
+                  // Optimize image URLs: request smaller width and lower quality for thumbnails
+                  let imageSrc = product.imageUrl?.startsWith('/uploads')
                     ? `${API_URL}${product.imageUrl}`
                     : product.imageUrl;
+                  
+                  if (imageSrc && imageSrc.includes('unsplash.com')) {
+                    const baseUrl = imageSrc.split('?')[0];
+                    imageSrc = `${baseUrl}?auto=format&fit=crop&w=400&q=75`;
+                  }
 
                   return (
                     <article

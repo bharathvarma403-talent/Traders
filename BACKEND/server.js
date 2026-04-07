@@ -788,6 +788,12 @@ app.get('/api/products', async (req, res) => {
             include: { brand: true },
             orderBy: [{ category: 'asc' }, { name: 'asc' }],
         });
+
+        // Add Cache-Control headers to improve performance (5 minutes public cache)
+        if (isProduction) {
+            res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+        }
+
         res.json(products);
     } catch (err) {
         console.error('GET /api/products error:', err);
