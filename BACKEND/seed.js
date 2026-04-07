@@ -5,12 +5,13 @@ const prisma = new PrismaClient();
 
 function resolveSeedPassword(envName, label) {
   const configured = process.env[envName];
-  if (typeof configured === 'string' && configured.trim().length >= 12) {
+  // Ensure we generate a 6-digit numeric PIN for the frontend compatibility
+  if (typeof configured === 'string' && configured.trim().match(/^\d{6}$/)) {
     return { password: configured.trim(), source: 'env' };
   }
 
-  const generated = crypto.randomBytes(12).toString('base64url');
-  console.warn(`[seed] ${envName} is not set. Generated a temporary ${label} password for this run.`);
+  const generated = Math.floor(100000 + Math.random() * 900000).toString();
+  console.warn(`[seed] ${envName} is not set or not a 6-digit PIN. Generated a 6-digit PIN for ${label}.`);
   return { password: generated, source: 'generated' };
 }
 
@@ -40,20 +41,14 @@ async function main() {
       role: 'ADMIN',
     },
   });
-  console.log(`Admin seeded: ${adminEmail} (${adminPasswordSource === 'env' ? 'password provided via env' : 'temporary password generated'})`);
+  console.log(`Admin seeded: ${adminEmail} (${adminPasswordSource === 'env' ? 'PIN provided via env' : 'temporary 6-digit PIN generated'})`);
   if (adminPasswordSource === 'generated') {
-    console.log(`Temporary admin password: ${adminPasswordPlain}`);
+    console.log(`ATTENTION: Temporary admin PIN is: ${adminPasswordPlain}`);
   }
 
   // ── Create Brands ──────────────────────────────────────────────────────
   console.log('Seeding top-tier brands and realistic products...');
-  const createBrand = async (name) => {
-    return await prisma.brand.upsert({
-      where: { name },
-      update: {},
-      create: { name },
-    });
-  };
+  const createBrand = (name) => prisma.brand.upsert({ where: { name }, update: {}, create: { name } });
 
   const anchor = await createBrand('Anchor by Panasonic');
   const havells = await createBrand('Havells India');
@@ -72,51 +67,51 @@ async function main() {
   const generic = await createBrand('Vasavi Supply');
 
   const products = [
-    // --- ELECTRICAL (Real wiring & switches) ---
-    { name: 'FR PVC Insulated Wire 1.5 sqmm', category: 'Electrical', subcategory: 'Wires & Cables', description: 'Flame retardant copper wire for residential wiring. 90m coil.', price: 1050, unit: 'coil', brandId: havells.id, rating: 5, stockCount: 120, imageUrl: 'https://images.unsplash.com/photo-1558442074-3c19857bc1dc?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'FR PVC Insulated Wire 2.5 sqmm', category: 'Electrical', subcategory: 'Wires & Cables', description: 'Heavy duty FR copper wire for AC/Geyser points. 90m coil.', price: 1650, unit: 'coil', brandId: finolex.id, rating: 5, stockCount: 80, imageUrl: 'https://images.unsplash.com/photo-150645606-d2495b5c9006?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Penta 6A 1-Way Switch', category: 'Electrical', subcategory: 'Switches', description: 'Standard polycarbonate 6 Amp switch. White finish.', price: 45, unit: 'piece', brandId: anchor.id, rating: 4, stockCount: 500, imageUrl: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'MCB 32A Double Pole', category: 'Electrical', subcategory: 'Circuit Breakers', description: 'Double pole miniature circuit breaker for main line protection.', price: 450, unit: 'piece', brandId: havells.id, rating: 5, stockCount: 50, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'High Speed Ceiling Fan 1200mm', category: 'Electrical', subcategory: 'Fans', description: 'Energy efficient ceiling fan with anti-dust coating.', price: 2150, unit: 'piece', brandId: crompton.id, rating: 4, stockCount: 25, imageUrl: 'https://images.unsplash.com/photo-1618037341584-c5a7559e0004?auto=format&fit=crop&w=1000&q=80' },
+    // --- ELECTRICAL ---
+    { name: 'FR PVC Insulated Wire 1.5 sqmm', category: 'Electrical', subcategory: 'Wires & Cables', description: 'Flame retardant copper wire for residential wiring. 90m coil.', price: 1050, unit: 'coil', brandId: havells.id, rating: 5, stockCount: 120, imageUrl: 'https://images.unsplash.com/photo-1558442074-3c19857bc1dc' },
+    { name: 'FR PVC Insulated Wire 2.5 sqmm', category: 'Electrical', subcategory: 'Wires & Cables', description: 'Heavy duty FR copper wire for AC/Geyser points. 90m coil.', price: 1650, unit: 'coil', brandId: finolex.id, rating: 5, stockCount: 80, imageUrl: 'https://images.unsplash.com/photo-1558442074-3c19857bc1dc' },
+    { name: 'Penta 6A 1-Way Switch', category: 'Electrical', subcategory: 'Switches', description: 'Standard polycarbonate 6 Amp switch. White finish.', price: 45, unit: 'piece', brandId: anchor.id, rating: 4, stockCount: 500, imageUrl: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2' },
+    { name: 'MCB 32A Double Pole', category: 'Electrical', subcategory: 'Circuit Breakers', description: 'Double pole miniature circuit breaker for main line protection.', price: 450, unit: 'piece', brandId: havells.id, rating: 5, stockCount: 50, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4' },
+    { name: 'High Speed Ceiling Fan 1200mm', category: 'Electrical', subcategory: 'Fans', description: 'Energy efficient ceiling fan with anti-dust coating.', price: 2150, unit: 'piece', brandId: crompton.id, rating: 4, stockCount: 25, imageUrl: 'https://images.unsplash.com/photo-1618037341584-c5a7559e0000' },
 
-    // --- PLUMBING (Pipes & Fittings) ---
-    { name: 'CPVC SDR 11 Pipe 1-Inch', category: 'Plumbing', subcategory: 'Pipes', description: 'High-grade CPVC pipe for hot/cold water. Selling per 10ft length.', price: 420, unit: 'length', brandId: ashirvad.id, rating: 5, stockCount: 200, imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'UPVC Schedule 40 Pipe 2-Inch', category: 'Plumbing', subcategory: 'Pipes', description: 'UPVC drainage and agricultural pipe. 20ft length.', price: 850, unit: 'length', brandId: finolex.id, rating: 4, stockCount: 150, imageUrl: 'https://images.unsplash.com/photo-1502422201995-23cbae0d2d31?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Brass Ball Valve 1-Inch', category: 'Plumbing', subcategory: 'Valves', description: 'Heavy duty solid brass ball valve.', price: 650, unit: 'piece', brandId: ashirvad.id, rating: 5, stockCount: 80, imageUrl: 'https://images.unsplash.com/photo-1592383823674-ba5e80dc6810?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Triple Layer Water Tank 1000L', category: 'Plumbing', subcategory: 'Tanks', description: 'UV protected triple layer plastic reservoir.', price: 6500, unit: 'piece', brandId: nandi.id, rating: 5, stockCount: 15, imageUrl: 'https://images.unsplash.com/photo-1563330232-57114bb0839c?auto=format&fit=crop&w=1000&q=80' },
+    // --- PLUMBING ---
+    { name: 'CPVC SDR 11 Pipe 1-Inch', category: 'Plumbing', subcategory: 'Pipes', description: 'High-grade CPVC pipe for hot/cold water. Selling per 10ft length.', price: 420, unit: 'length', brandId: ashirvad.id, rating: 5, stockCount: 200, imageUrl: 'https://images.unsplash.com/photo-B0jijv2X-U8' },
+    { name: 'UPVC Schedule 40 Pipe 2-Inch', category: 'Plumbing', subcategory: 'Pipes', description: 'UPVC drainage and agricultural pipe. 20ft length.', price: 850, unit: 'length', brandId: finolex.id, rating: 4, stockCount: 150, imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a' },
+    { name: 'Brass Ball Valve 1-Inch', category: 'Plumbing', subcategory: 'Valves', description: 'Heavy duty solid brass ball valve.', price: 650, unit: 'piece', brandId: ashirvad.id, rating: 5, stockCount: 80, imageUrl: 'https://images.unsplash.com/photo-1592383823674-ba5e80dc6810' },
+    { name: 'Triple Layer Water Tank 1000L', category: 'Plumbing', subcategory: 'Tanks', description: 'UV protected triple layer plastic reservoir.', price: 6500, unit: 'piece', brandId: nandi.id, rating: 5, stockCount: 15, imageUrl: 'https://images.unsplash.com/photo-1563330232-57114bb0839c' },
 
-    // --- CEMENT (Bags) ---
-    { name: 'OPC 53 Grade Cement', category: 'Cement', subcategory: 'OPC', description: 'Ordinary Portland Cement for heavy concrete structures. 50kg bag.', price: 430, unit: 'bag', brandId: ultratech.id, rating: 5, stockCount: 300, imageUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356f2f?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'PPC Blended Cement', category: 'Cement', subcategory: 'PPC', description: 'Portland Pozzolana Cement for plastering and brickwork. 50kg bag.', price: 390, unit: 'bag', brandId: ambuja.id, rating: 4, stockCount: 400, imageUrl: 'https://images.unsplash.com/photo-1623058866380-4d4ec31b1473?auto=format&fit=crop&w=1000&q=80' },
+    // --- CEMENT ---
+    { name: 'OPC 53 Grade Cement', category: 'Cement', subcategory: 'OPC', description: 'Ordinary Portland Cement for heavy concrete structures. 50kg bag.', price: 430, unit: 'bag', brandId: ultratech.id, rating: 5, stockCount: 300, imageUrl: 'https://images.unsplash.com/photo-3H26DnkYLHo' },
+    { name: 'PPC Blended Cement', category: 'Cement', subcategory: 'PPC', description: 'Portland Pozzolana Cement for plastering and brickwork. 50kg bag.', price: 390, unit: 'bag', brandId: ambuja.id, rating: 4, stockCount: 400, imageUrl: 'https://images.unsplash.com/photo-3H26DnkYLHo' },
 
-    // --- PAINT (Buckets & Brushes) ---
-    { name: 'Royal Emulsion Interior Paint', category: 'Paint', subcategory: 'Interior Emulsion', description: 'Premium luxury emulsion for interior walls. 20L Bucket.', price: 4800, unit: 'bucket', brandId: asianPaints.id, rating: 5, stockCount: 40, imageUrl: 'https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'WeatherCoat Exterior Paint', category: 'Paint', subcategory: 'Exterior Emulsion', description: 'All weather protection exterior paint. 20L Bucket.', price: 4200, unit: 'bucket', brandId: berger.id, rating: 4, stockCount: 50, imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Acrylic Wall Putty', category: 'Paint', subcategory: 'Putty', description: 'Smooth wall putty. 40kg bag.', price: 850, unit: 'bag', brandId: asianPaints.id, rating: 4, stockCount: 100, imageUrl: 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Professional Paint Roller 9-Inch', category: 'Paint', subcategory: 'Accessories', description: 'Microfiber professional wall roller.', price: 250, unit: 'piece', brandId: generic.id, rating: 4, stockCount: 80, imageUrl: 'https://images.unsplash.com/photo-1596700813352-7efc9043ecb1?auto=format&fit=crop&w=1000&q=80' },
+    // --- PAINT ---
+    { name: 'Royal Emulsion Interior Paint', category: 'Paint', subcategory: 'Interior Emulsion', description: 'Premium luxury emulsion for interior walls. 20L Bucket.', price: 4800, unit: 'bucket', brandId: asianPaints.id, rating: 5, stockCount: 40, imageUrl: 'https://images.unsplash.com/photo-NFamNeP3OjA' },
+    { name: 'WeatherCoat Exterior Paint', category: 'Paint', subcategory: 'Exterior Emulsion', description: 'All weather protection exterior paint. 20L Bucket.', price: 4200, unit: 'bucket', brandId: berger.id, rating: 4, stockCount: 50, imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f' },
+    { name: 'Acrylic Wall Putty', category: 'Paint', subcategory: 'Putty', description: 'Smooth wall putty. 40kg bag.', price: 850, unit: 'bag', brandId: asianPaints.id, rating: 4, stockCount: 100, imageUrl: 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b' },
+    { name: 'Professional Paint Roller 9-Inch', category: 'Paint', subcategory: 'Accessories', description: 'Microfiber professional wall roller.', price: 250, unit: 'piece', brandId: generic.id, rating: 4, stockCount: 80, imageUrl: 'https://images.unsplash.com/photo-1596700813352-7efc9043ecb1' },
 
-    // --- STEEL (Rebars) ---
-    { name: 'TMT Rebar 8mm / Fe550D', category: 'Steel', subcategory: 'TMT Bars', description: 'Thermo Mechanically Treated bar for RC construction. Sold per piece (12m).', price: 280, unit: 'length', brandId: tata.id, rating: 5, stockCount: 1500, imageUrl: 'https://images.unsplash.com/photo-1533619223708-410a6ec93be8?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'TMT Rebar 12mm / Fe550D', category: 'Steel', subcategory: 'TMT Bars', description: 'Thermo Mechanically Treated heavy beam bar. Sold per piece (12m).', price: 620, unit: 'length', brandId: jsw.id, rating: 5, stockCount: 1000, imageUrl: 'https://images.unsplash.com/photo-1601582589907-f92af5ed9db8?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Binding Wire (GI)', category: 'Steel', subcategory: 'Hardware', description: 'Galvanized iron binding wire. Sold per Kg.', price: 85, unit: 'kg', brandId: generic.id, rating: 4, stockCount: 500, imageUrl: 'https://images.unsplash.com/photo-1558223393-27150a00e57d?auto=format&fit=crop&w=1000&q=80' },
+    // --- STEEL ---
+    { name: 'TMT Rebar 8mm / Fe550D', category: 'Steel', subcategory: 'TMT Bars', description: 'Thermo Mechanically Treated bar for RC construction. Sold per piece (12m).', price: 280, unit: 'length', brandId: tata.id, rating: 5, stockCount: 1500, imageUrl: 'https://images.unsplash.com/photo-ARW8QOYR_bI' },
+    { name: 'TMT Rebar 12mm / Fe550D', category: 'Steel', subcategory: 'TMT Bars', description: 'Thermo Mechanically Treated heavy beam bar. Sold per piece (12m).', price: 620, unit: 'length', brandId: jsw.id, rating: 5, stockCount: 1000, imageUrl: 'https://images.unsplash.com/photo-ARW8QOYR_bI' },
+    { name: 'Binding Wire (GI)', category: 'Steel', subcategory: 'Hardware', description: 'Galvanized iron binding wire. Sold per Kg.', price: 85, unit: 'kg', brandId: generic.id, rating: 4, stockCount: 500, imageUrl: 'https://images.unsplash.com/photo-1558223393-27150a00e57d' },
 
     // --- SAND ---
-    { name: 'Filtered River Sand', category: 'Sand', subcategory: 'River Sand', description: 'Fine-grade river sand for high quality plastering. Sold per Tractor Load (approx 3 tons).', price: 3500, unit: 'load', brandId: generic.id, rating: 4, stockCount: 20, imageUrl: 'https://images.unsplash.com/photo-1582260408544-24584e0307bb?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Manufactured M-Sand', category: 'Sand', subcategory: 'M-Sand', description: 'Crushed rock sand for structural concrete. Sold per Tractor Load.', price: 2800, unit: 'load', brandId: generic.id, rating: 5, stockCount: 40, imageUrl: 'https://images.unsplash.com/photo-1542158872-dd3b8ce8f415?auto=format&fit=crop&w=1000&q=80' },
+    { name: 'Filtered River Sand', category: 'Sand', subcategory: 'River Sand', description: 'Fine-grade river sand for high quality plastering. Sold per Tractor Load (approx 3 tons).', price: 3500, unit: 'load', brandId: generic.id, rating: 4, stockCount: 20, imageUrl: 'https://images.unsplash.com/photo-Mv9hjnEUHR4' },
+    { name: 'Manufactured M-Sand', category: 'Sand', subcategory: 'M-Sand', description: 'Crushed rock sand for structural concrete. Sold per Tractor Load.', price: 2800, unit: 'load', brandId: generic.id, rating: 5, stockCount: 40, imageUrl: 'https://images.unsplash.com/photo-Mv9hjnEUHR4' },
 
     // --- BRICKS ---
-    { name: 'Premium Red Clay Bricks', category: 'Bricks', subcategory: 'Clay', description: 'Kiln baked standard red bricks. Sold per 1000 pieces.', price: 7500, unit: '1000 pieces', brandId: generic.id, rating: 4, stockCount: 15, imageUrl: 'https://images.unsplash.com/photo-1587211130678-0e3632cf4308?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Solid Concrete Blocks 6-Inch', category: 'Bricks', subcategory: 'Concrete', description: 'Standard 6-inch solid blocks for compound walls. Sold per piece.', price: 42, unit: 'piece', brandId: generic.id, rating: 5, stockCount: 5000, imageUrl: 'https://images.unsplash.com/photo-1601628828688-632f38a5a7d0?auto=format&fit=crop&w=1000&q=80' },
+    { name: 'Premium Red Clay Bricks', category: 'Bricks', subcategory: 'Clay', description: 'Kiln baked standard red bricks. Sold per 1000 pieces.', price: 7500, unit: '1000 pieces', brandId: generic.id, rating: 4, stockCount: 15, imageUrl: 'https://images.unsplash.com/photo-BTwLNLxPjzk' },
+    { name: 'Solid Concrete Blocks 6-Inch', category: 'Bricks', subcategory: 'Concrete', description: 'Standard 6-inch solid blocks for compound walls. Sold per piece.', price: 42, unit: 'piece', brandId: generic.id, rating: 5, stockCount: 5000, imageUrl: 'https://images.unsplash.com/photo-1601628828688-632f38a5a7d0' },
 
     // --- TOOLS ---
-    { name: 'Professional Impact Drill 600W', category: 'Tools', subcategory: 'Power Tools', description: 'Heavy duty rotary impact drill for masonry and wood.', price: 3200, unit: 'piece', brandId: bosch.id, rating: 5, stockCount: 12, imageUrl: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Claw Hammer steel shaft', category: 'Tools', subcategory: 'Hand Tools', description: 'Drop forged steel claw hammer with rubber grip.', price: 450, unit: 'piece', brandId: stanley.id, rating: 4, stockCount: 30, imageUrl: 'https://images.unsplash.com/photo-1536214227926-d6b797ebd925?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Measuring Tape 5m/16ft', category: 'Tools', subcategory: 'Measuring', description: 'Industrial grade measuring retractable tape.', price: 220, unit: 'piece', brandId: stanley.id, rating: 4, stockCount: 50, imageUrl: 'https://images.unsplash.com/photo-1521191024546-b39174afdbac?auto=format&fit=crop&w=1000&q=80' },
+    { name: 'Professional Impact Drill 600W', category: 'Tools', subcategory: 'Power Tools', description: 'Heavy duty rotary impact drill for masonry and wood.', price: 3200, unit: 'piece', brandId: bosch.id, rating: 5, stockCount: 12, imageUrl: 'https://images.unsplash.com/photo-1504148455328-c376907d081c' },
+    { name: 'Claw Hammer steel shaft', category: 'Tools', subcategory: 'Hand Tools', description: 'Drop forged steel claw hammer with rubber grip.', price: 450, unit: 'piece', brandId: stanley.id, rating: 4, stockCount: 30, imageUrl: 'https://images.unsplash.com/photo-1626071490278-f2b7a0d4c6d6' },
+    { name: 'Measuring Tape 5m/16ft', category: 'Tools', subcategory: 'Measuring', description: 'Industrial grade measuring retractable tape.', price: 220, unit: 'piece', brandId: stanley.id, rating: 4, stockCount: 50, imageUrl: 'https://images.unsplash.com/photo-1521191024546-b39174afdbac' },
 
     // --- HARDWARE ---
-    { name: 'Self Tapping Steel Screws (Box of 100)', category: 'Hardware', subcategory: 'Fasteners', description: 'Zinc plated Philip head screws. Box of 100.', price: 150, unit: 'box', brandId: generic.id, rating: 4, stockCount: 200, imageUrl: 'https://images.unsplash.com/photo-1597500589139-43c2cbb6db58?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Heavy Duty Door Hinge 4-Inch', category: 'Hardware', subcategory: 'Fittings', description: 'Stainless steel door hinges, set of 2.', price: 280, unit: 'set', brandId: generic.id, rating: 4, stockCount: 150, imageUrl: 'https://images.unsplash.com/photo-1582236836798-e7d690a78631?auto=format&fit=crop&w=1000&q=80' },
-    { name: 'Iron Nails 2-Inch (1kg)', category: 'Hardware', subcategory: 'Fasteners', description: 'Standard woodwork nails. Sold per Kg.', price: 90, unit: 'kg', brandId: generic.id, rating: 4, stockCount: 300, imageUrl: 'https://images.unsplash.com/photo-1620286708518-d7ecea55e2c5?auto=format&fit=crop&w=1000&q=80' },
+    { name: 'Self Tapping Steel Screws (Box of 100)', category: 'Hardware', subcategory: 'Fasteners', description: 'Zinc plated Philip head screws. Box of 100.', price: 150, unit: 'box', brandId: generic.id, rating: 4, stockCount: 200, imageUrl: 'https://images.unsplash.com/photo-1597500589139-43c2cbb6db58' },
+    { name: 'Heavy Duty Door Hinge 4-Inch', category: 'Hardware', subcategory: 'Fittings', description: 'Stainless steel door hinges, set of 2.', price: 280, unit: 'set', brandId: generic.id, rating: 4, stockCount: 150, imageUrl: 'https://images.unsplash.com/photo-1582236836798-e7d690a78631' },
+    { name: 'Iron Nails 2-Inch (1kg)', category: 'Hardware', subcategory: 'Fasteners', description: 'Standard woodwork nails. Sold per Kg.', price: 90, unit: 'kg', brandId: generic.id, rating: 4, stockCount: 300, imageUrl: 'https://images.unsplash.com/photo-1620286708518-d7ecea55e2c5' },
   ];
 
   for (const p of products) {
@@ -142,7 +137,7 @@ async function main() {
     });
   }
 
-  console.log('Successfully seeded 28 realistic products across ' + [...new Set(products.map(p => p.category))].length + ' categories.');
+  console.log(`Successfully seeded ${products.length} realistic products across ${[...new Set(products.map(p => p.category))].length} categories.`);
 }
 
 main()

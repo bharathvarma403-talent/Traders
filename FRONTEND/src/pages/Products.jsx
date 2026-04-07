@@ -46,6 +46,7 @@ export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [brokenImages, setBrokenImages] = useState(new Set());
 
   useEffect(() => {
     if (!API_URL) {
@@ -266,7 +267,11 @@ export default function Products() {
                     ? `${API_URL}${product.imageUrl}`
                     : product.imageUrl;
                   
-                  if (imageSrc && imageSrc.includes('unsplash.com')) {
+                  const isBroken = brokenImages.has(product.id);
+                  if (isBroken || !imageSrc) {
+                    // Fallback to a professional construction placeholder if image is broken or missing
+                    imageSrc = 'https://images.unsplash.com/photo-1541888941259-7b9d9ef9cad0?auto=format&fit=crop&w=400&q=75';
+                  } else if (imageSrc.includes('unsplash.com')) {
                     const baseUrl = imageSrc.split('?')[0];
                     imageSrc = `${baseUrl}?auto=format&fit=crop&w=400&q=75`;
                   }
@@ -293,6 +298,11 @@ export default function Products() {
                             decoding="async"
                             className="h-full w-full object-cover"
                             style={{ filter: isOutOfStock ? 'grayscale(1)' : 'none' }}
+                            onError={() => {
+                              if (!isBroken) {
+                                setBrokenImages(prev => new Set(prev).add(product.id));
+                              }
+                            }}
                           />
                         ) : (
                           <ShieldCheck className="h-8 w-8" style={{ color: 'var(--color-muted)', opacity: 0.7 }} />
