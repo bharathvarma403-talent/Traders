@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 function resolveSeedPassword(envName, label) {
   const configured = process.env[envName];
-  if (typeof configured === 'string' && configured.trim().length >= 12) {
+  if (typeof configured === 'string' && configured.trim().length >= 6) {
     return { password: configured.trim(), source: 'env' };
   }
 
