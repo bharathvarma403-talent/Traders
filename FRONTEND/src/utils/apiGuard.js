@@ -7,7 +7,7 @@ export function getApiUrl() {
   if (!url || url === 'undefined') {
     throw new Error(
       '[apiGuard] VITE_API_URL is not set. ' +
-      'Create frontend/.env.local with VITE_API_URL=http://localhost:4000'
+      'Create frontend/.env.local with VITE_API_URL=https://traders-tz8w.onrender.com'
     );
   }
   return url;

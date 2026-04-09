@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix FRONTEND\" \"npm run dev --prefix BACKEND\"",
     "install:all": "npm install --prefix FRONTEND && npm install --prefix BACKEND",
+    "build": "npm run build:frontend",
     "build:frontend": "npm run build --prefix FRONTEND",
     "start:backend": "npm start --prefix BACKEND"
   },

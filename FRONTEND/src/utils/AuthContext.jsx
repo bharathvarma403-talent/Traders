@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   const getRequestError = useCallback((error, fallback) => {
     if (error.response?.data?.error) return error.response.data.error;
     if (error.code === 'ERR_NETWORK') {
-      return 'Unable to reach the server. Start the backend API on http://localhost:4000 and try again.';
+      return 'Unable to reach the server. Please check your internet connection and ensure the backend service is running.';
     }
     return fallback;
   }, []);

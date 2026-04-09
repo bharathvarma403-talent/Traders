@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "prisma generate",
-    "build": "prisma generate && prisma db push --accept-data-loss && node seed.js",
+    "build": "prisma generate && prisma migrate deploy && node seed.js",
     "db:push": "prisma db push",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "node seed.js",

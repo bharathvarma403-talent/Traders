@@ -27,11 +27,12 @@ if (!fs.existsSync(uploadDir)) {
 
 // ─── Config ────────────────────────────────────────────────────────────────
 const readSecret = (name) => {
-    const configured = String(process.env[name] || '').trim();
-    if (configured) return configured;
+    const value = String(process.env[name] || '').trim();
+    if (value) return value;
 
     if (isProduction) {
-        throw new Error(`${name} environment variable is required in production.`);
+        console.error(`[FATAL] ${name} environment variable is missing in production!`);
+        process.exit(1);
     }
 
     const generated = crypto.randomBytes(32).toString('hex');
@@ -147,7 +148,10 @@ const otpLimiter = rateLimit({
 const registerSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters').max(100),
     email: z.string().email('Invalid email address'),
-    password: z.string().length(6, 'Password must be exactly 6 digits').regex(/^\d{6}$/, 'Password must be 6 digits'),
+    password: z.string()
+        .min(8, 'Password must be at least 8 characters')
+        .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+        .regex(/[0-9]/, 'Password must contain at least one number'),
     phone: z.string().regex(/^\+?[0-9]{7,15}$/, 'Invalid phone number').optional(),
 });
 
@@ -1056,16 +1060,54 @@ app.patch('/api/reservations/:id/status', authenticate, authorize(['ADMIN']), as
     if (!RESERVATION_STATUSES.has(nextStatus)) return res.status(400).json({ error: 'Invalid status.' });
 
     try {
-        const updated = await prisma.reservation.update({
-            where: { id: reservationId },
-            data: { status: nextStatus },
+        const result = await prisma.$transaction(async (tx) => {
+            const current = await tx.reservation.findUnique({
+                where: { id: reservationId },
+                select: { status: true, productId: true, quantity: true }
+            });
+
+            if (!current) throw new Error('NOT_FOUND');
+
+            // Inventory logic
+            if (current.status !== 'Accepted' && nextStatus === 'Accepted') {
+                // Moving to Accepted: Deduct stock
+                const product = await tx.product.findUnique({ where: { id: current.productId } });
+                if (!product) throw new Error('PRODUCT_NOT_FOUND');
+                if (product.stockCount < current.quantity) throw new Error('INSUFFICIENT_STOCK');
+
+                await tx.product.update({
+                    where: { id: current.productId },
+                    data: {
+                        stockCount: { decrement: current.quantity },
+                        stockStatus: (product.stockCount - current.quantity) > 0 ? 'In Stock' : 'Out of Stock'
+                    }
+                });
+            } else if (current.status === 'Accepted' && nextStatus === 'Rejected') {
+                // Moving away from Accepted to Rejected: Return stock
+                await tx.product.update({
+                    where: { id: current.productId },
+                    data: {
+                        stockCount: { increment: current.quantity },
+                        stockStatus: 'In Stock'
+                    }
+                });
+            }
+
+            return await tx.reservation.update({
+                where: { id: reservationId },
+                data: { status: nextStatus },
+            });
         });
-        const [enriched] = await enrichReservations([updated]);
+
+        const [enriched] = await enrichReservations([result]);
         res.json(enriched);
     } catch (err) {
-        if (err.code === 'P2025') return res.status(404).json({ error: 'Reservation not found.' });
+        if (err.message === 'NOT_FOUND') return res.status(404).json({ error: 'Reservation not found.' });
+        if (err.message === 'PRODUCT_NOT_FOUND') return res.status(404).json({ error: 'Product not found.' });
+        if (err.message === 'INSUFFICIENT_STOCK') return res.status(400).json({ error: 'Insufficient stock to fulfill this order.' });
+        
         console.error('PATCH /api/reservations/:id/status error:', err);
-        res.status(500).json({ error: 'Failed to update reservation.' });
+        res.status(500).json({ error: 'Failed to update reservation status.' });
     }
 });
 
@@ -1113,8 +1155,14 @@ app.get("/", (req, res) => {
 });
 
 // ── Health Check ─────────────────────────────────────────────────────────────
-app.get('/api/health', (req, res) => {
-    res.json({ status: "OK" });
+app.get('/api/health', async (req, res) => {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        res.json({ status: "OK", database: "connected" });
+    } catch (e) {
+        console.error('Health check failed:', e.message);
+        res.status(503).json({ status: "ERROR", database: "disconnected" });
+    }
 });
 
 // ─── Global Error Handler ────────────────────────────────────────────────────
@@ -1164,9 +1212,24 @@ const ensureAdminExists = async () => {
 // ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, async () => {
-    console.log(`Server running on port ${PORT}`);
-    await ensureAdminExists();
-});
+const startServer = async () => {
+    try {
+        // Verify DB connection before listening
+        await prisma.$connect();
+        await prisma.$queryRaw`SELECT 1`;
+        console.log('Database connection verified.');
+
+        await ensureAdminExists();
+
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error('Failed to start server:', err.message);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 module.exports = app;
