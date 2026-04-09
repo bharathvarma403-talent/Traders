@@ -1189,11 +1189,12 @@ app.use((err, req, res, _next) => {
 // ─── Ensure Default Admin Exists ───────────────────────────────────────────
 const ensureAdminExists = async () => {
     try {
-        const adminEmail = normalizeEmail(process.env.BOOTSTRAP_ADMIN_EMAIL || '');
-        const adminPassword = String(process.env.BOOTSTRAP_ADMIN_PASSWORD || '');
-        const adminName = String(process.env.BOOTSTRAP_ADMIN_NAME || 'Vasavi Admin').trim() || 'Vasavi Admin';
+        const adminEmail = normalizeEmail(process.env.BOOTSTRAP_ADMIN_EMAIL || process.env.SEED_ADMIN_EMAIL || '');
+        const adminPassword = String(process.env.BOOTSTRAP_ADMIN_PASSWORD || process.env.SEED_ADMIN_PASSWORD || '');
+        const adminName = String(process.env.BOOTSTRAP_ADMIN_NAME || process.env.SEED_ADMIN_NAME || 'Vasavi Admin').trim() || 'Vasavi Admin';
 
         if (!adminEmail || !adminPassword) {
+            console.log('[bootstrap] Admin credentials missing (email or password). Skipping bootstrap.');
             return;
         }
 
