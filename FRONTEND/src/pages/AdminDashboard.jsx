@@ -132,6 +132,14 @@ export default function AdminDashboard() {
     loadProducts();
   }, [loadReservations, loadUsers, loadProducts]);
 
+  // Auto-refresh orders every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadReservations();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [loadReservations]);
+
   // ── Status Update ──────────────────────────────────────
   const handleStatusUpdate = async (id, nextStatus) => {
     if (!API_URL) return;
@@ -268,13 +276,20 @@ export default function AdminDashboard() {
         <nav className="flex-1 p-4 space-y-1">
           {SECTIONS.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setActiveSection(id)}
-              className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+              className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all relative"
               style={{
                 background: activeSection === id ? 'rgba(255,215,0,0.08)' : 'transparent',
                 color: activeSection === id ? 'var(--color-accent)' : 'var(--color-muted)',
                 border: activeSection === id ? '1px solid rgba(255,215,0,0.16)' : '1px solid transparent',
               }}>
-              <Icon className="h-4 w-4" /> {label}
+              <Icon className="h-4 w-4" /> 
+              {label}
+              {id === 'orders' && pendingCount > 0 && (
+                <span className="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[10px] font-bold shadow-lg"
+                  style={{ background: 'var(--color-accent)', color: '#000' }}>
+                  {pendingCount}
+                </span>
+              )}
             </button>
           ))}
         </nav>

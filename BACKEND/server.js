@@ -192,8 +192,10 @@ const reservationSchema = z.object({
         if (!parsed) return false;
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
-        return parsed >= startOfToday;
-    }, 'Pickup date must be today or later'),
+        // Allow a 24-hour buffer to account for global timezone differences
+        const minAllowed = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
+        return parsed >= minAllowed;
+    }, 'Pickup date must be valid and no earlier than today'),
     phoneNumber: z.string().regex(/^\+?[0-9]{7,15}$/, 'A valid phone number is required to place an order'),
     notes: z.string().trim().max(500).optional(),
 });
