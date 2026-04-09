@@ -71,9 +71,15 @@ const configuredOrigins = String(process.env.FRONTEND_URL || '')
     .map((origin) => origin.trim())
     .filter(Boolean);
 
+const allowedOrigins = [
+    ...configuredOrigins,
+    'https://vasavitraders.store',
+    'https://www.vasavitraders.store'
+];
+
 const isAllowedOrigin = (origin) => {
     if (!origin) return true;
-    if (configuredOrigins.includes(origin)) return true;
+    if (allowedOrigins.includes(origin)) return true;
     if (!isProduction && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/i.test(origin)) {
         return true;
     }
