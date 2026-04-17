@@ -209,7 +209,7 @@ export default function Products() {
               style={{ borderColor: 'var(--color-accent)' }}
             />
           </div>
-        ) : !selectedCategory ? (
+        ) : (!selectedCategory && !searchTerm) ? (
           categories.length === 0 ? (
             <div
               className="rounded-3xl border border-dashed px-6 py-16 text-center text-sm"
@@ -250,12 +250,12 @@ export default function Products() {
         ) : (
           <>
             <h2 className="mb-6 text-xl font-semibold" style={{ color: 'var(--color-text)' }}>
-              {selectedCategory}
+              {selectedCategory || 'Search Results'}
             </h2>
 
             {filteredProducts.length === 0 ? (
               <p className="py-20 text-center text-sm" style={{ color: 'var(--color-muted)' }}>
-                No products match your search in this category.
+                No products match your search.
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -374,7 +374,7 @@ export default function Products() {
                           }}
                         >
                           <ShoppingCart className="h-4 w-4" />
-                          {isOutOfStock ? 'Out of Stock' : 'Order Now'}
+                          {isOutOfStock ? 'Out of Stock' : 'Reserve Now'}
                         </button>
                       </div>
                     </article>
