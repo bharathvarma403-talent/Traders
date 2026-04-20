@@ -92,6 +92,8 @@ export default function Products() {
 
     loadProducts();
 
+    return () => {
+      cancelled = true;
     };
   }, [API_URL]);
 
