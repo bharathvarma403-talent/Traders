@@ -176,36 +176,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ── Send Phone OTP ──────────────────────────────────────────────────────
-  const sendOtp = async (phone) => {
-    const { url, error: urlError } = getApiUrlOrError();
-    if (urlError) return { success: false, error: urlError };
-
-    try {
-      const response = await axios.post(`${url}/api/auth/send-otp`, { phone });
-      return { success: true, message: response.data.message, dev_otp: response.data.dev_otp };
-    } catch (error) {
-      return { success: false, error: getRequestError(error, 'Failed to send OTP.') };
-    }
-  };
-
-  // ── Verify Phone OTP ────────────────────────────────────────────────────
-  const verifyOtp = async (phone, otp) => {
-    const { url, error: urlError } = getApiUrlOrError();
-    if (urlError) return { success: false, error: urlError };
-
-    try {
-      const response = await axios.post(`${url}/api/auth/verify-otp`, { phone, otp });
-      const { token: accessToken, refreshToken, user: loggedInUser } = response.data;
-      applyToken(accessToken);
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-      setUser(loggedInUser);
-      return { success: true, user: loggedInUser };
-    } catch (error) {
-      return { success: false, error: getRequestError(error, 'OTP verification failed.') };
-    }
-  };
-
   // ── Logout ──────────────────────────────────────────────────────────────
   const logout = () => {
     applyToken(null);
@@ -223,8 +193,6 @@ export const AuthProvider = ({ children }) => {
         loginWithPhone,
         register,
         googleLogin,
-        sendOtp,
-        verifyOtp,
         logout,
       }}
     >

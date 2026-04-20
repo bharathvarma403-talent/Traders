@@ -92,8 +92,35 @@ export default function Products() {
 
     loadProducts();
 
+    };
+  }, [API_URL]);
+
+  useEffect(() => {
+    if (!API_URL) return;
+
+    const eventSource = new EventSource(`${API_URL}/api/sync/catalog`);
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'CATALOG_UPDATED') {
+          setIsRefreshing(true);
+          // Add a cache buster query parameter to guarantee a fresh pull bypasses CDN edge logic
+          axios.get(`${API_URL}/api/products?forceRefresh=true`, {
+            headers: { 'Cache-Control': 'no-cache' }
+          }).then(({ data: freshData }) => {
+            if (Array.isArray(freshData)) {
+              setProducts(freshData);
+              localStorage.setItem('vt_catalog_cache', JSON.stringify(freshData));
+              setIsRefreshing(false);
+            }
+          }).catch(() => setIsRefreshing(false));
+        }
+      } catch (err) {}
+    };
+
     return () => {
-      cancelled = true;
+      eventSource.close();
     };
   }, [API_URL]);
 
