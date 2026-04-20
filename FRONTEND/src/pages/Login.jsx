@@ -519,7 +519,7 @@ export default function Login() {
               <ErrorBanner message={error} />
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>Admin Email</label>
-                <AuthInput id="admin-email" icon={Mail} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vasavi@admin.com" autoComplete="username" />
+                <AuthInput id="admin-email" icon={Mail} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter admin email" autoComplete="username" />
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>6-Digit Password</label>
