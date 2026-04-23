@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const prisma = require('../db');
 const { notifyCatalogUpdate } = require('../utils/syncEmitter');
 const AppError = require('../utils/AppError');
@@ -74,12 +76,24 @@ const updateProduct = async (req, res, next) => {
       create: { name: brandName },
     });
 
+    const oldProduct = await prisma.product.findUnique({ where: { id: productId } });
+    if (!oldProduct) return next(new AppError('Product not found.', 404));
+
     const updateData = {
       name, category, subcategory, description, price, unit, brandId: brand.id,
       stockCount: stockCount ?? 0,
       stockStatus: (stockCount ?? 0) > 0 ? 'In Stock' : 'Out of Stock',
     };
-    if (req.file) updateData.imageUrl = `/uploads/${req.file.filename}`;
+
+    if (req.file) {
+      updateData.imageUrl = `/uploads/${req.file.filename}`;
+      // Clean up old image if it exists and is a local file
+      if (oldProduct.imageUrl && oldProduct.imageUrl.startsWith('/uploads/')) {
+        const oldFileName = oldProduct.imageUrl.split('/').pop();
+        const oldFilePath = path.join(__dirname, '../../uploads', oldFileName);
+        if (fs.existsSync(oldFilePath)) fs.unlinkSync(oldFilePath);
+      }
+    }
 
     const updated = await prisma.product.update({
       where: { id: productId },
@@ -101,7 +115,18 @@ const deleteProduct = async (req, res, next) => {
   if (!Number.isInteger(productId)) return next(new AppError('Invalid product id.', 400));
 
   try {
+    const oldProduct = await prisma.product.findUnique({ where: { id: productId } });
+    if (!oldProduct) return next(new AppError('Product not found.', 404));
+
     await prisma.product.delete({ where: { id: productId } });
+
+    // Clean up associated local image
+    if (oldProduct.imageUrl && oldProduct.imageUrl.startsWith('/uploads/')) {
+      const oldFileName = oldProduct.imageUrl.split('/').pop();
+      const oldFilePath = path.join(__dirname, '../../uploads', oldFileName);
+      if (fs.existsSync(oldFilePath)) fs.unlinkSync(oldFilePath);
+    }
+
     notifyCatalogUpdate();
     res.json({ message: 'Product deleted successfully.' });
   } catch (err) {

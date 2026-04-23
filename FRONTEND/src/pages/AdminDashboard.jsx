@@ -201,9 +201,7 @@ export default function AdminDashboard() {
         formData.append('image', editProductData.image);
       }
 
-      const { data } = await axios.put(`${API_URL}/api/admin/products/${editingProductId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await axios.put(`${API_URL}/api/admin/products/${editingProductId}`, formData);
       
       setProducts(prev => prev.map(p => p.id === editingProductId ? data : p));
       toast.success('Product updated!');
@@ -230,11 +228,7 @@ export default function AdminDashboard() {
         }
       });
       
-      const { data } = await axios.post(`${API_URL}/api/admin/products`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const { data } = await axios.post(`${API_URL}/api/admin/products`, formData);
       setProducts(prev => [data, ...prev]);
       setShowAddProduct(false);
       setNewProduct({ name: '', category: CATEGORY_OPTIONS[0], subcategory: '', description: '', price: '', unit: '', brandName: '', stockCount: 100, image: null });
@@ -597,9 +591,16 @@ export default function AdminDashboard() {
                     <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Description *</label>
                     <textarea required value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} rows="2" className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}></textarea>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Product Image *</label>
-                    <input required type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={e => setNewProduct({...newProduct, image: e.target.files[0]})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-muted)' }} />
+                  <div className="flex gap-4 items-end">
+                    <div className="flex-1">
+                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Product Image *</label>
+                      <input required type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={e => setNewProduct({...newProduct, image: e.target.files[0]})} className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-muted)' }} />
+                    </div>
+                    {newProduct.image && (
+                      <div className="w-16 h-16 rounded-lg overflow-hidden border shrink-0" style={{ borderColor: 'var(--color-border)' }}>
+                        <img src={URL.createObjectURL(newProduct.image)} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex justify-end pt-2">
                     <button type="submit" disabled={addingProduct} className="btn-primary flex items-center justify-center min-w-[120px] py-2.5 text-sm" style={{ opacity: addingProduct ? 0.7 : 1 }}>
@@ -663,9 +664,19 @@ export default function AdminDashboard() {
                             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Qty</label>
                             <input type="number" value={editProductData.stockCount} onChange={e => setEditProductData({...editProductData, stockCount: e.target.value})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
                           </div>
-                          <div>
-                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>New Image (optional)</label>
-                            <input type="file" accept="image/*" onChange={e => setEditProductData({...editProductData, image: e.target.files[0]})} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
+                          <div className="col-span-1 md:col-span-2 lg:col-span-1">
+                            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--color-muted)' }}>Image (optional)</label>
+                            <div className="flex items-center gap-2">
+                              {(editProductData.image || editProductData.imageUrl) && (
+                                <div className="w-9 h-9 rounded overflow-hidden shrink-0" style={{ border: '1px solid var(--color-border)' }}>
+                                  <img 
+                                    src={editProductData.image ? URL.createObjectURL(editProductData.image) : (editProductData.imageUrl.startsWith('/uploads') ? `${API_URL}${editProductData.imageUrl}` : editProductData.imageUrl)} 
+                                    alt="Preview" className="w-full h-full object-cover" 
+                                  />
+                                </div>
+                              )}
+                              <input type="file" accept="image/*" onChange={e => setEditProductData({...editProductData, image: e.target.files[0]})} className="flex-1 min-w-0 rounded-lg px-2 py-1.5 text-xs outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
+                            </div>
                           </div>
                         </div>
                         <div className="mb-2">
@@ -716,6 +727,7 @@ export default function AdminDashboard() {
                                 price: p.price || 0,
                                 unit: p.unit || 'piece',
                                 stockCount: p.stockCount || 0,
+                                imageUrl: p.imageUrl,
                                 image: null // Keep null so we don't upload a bad file reference
                               });
                             }}

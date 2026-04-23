@@ -297,13 +297,7 @@ export default function Products() {
                     : product.imageUrl;
                   
                   const isBroken = brokenImages.has(product.id);
-                  if (isBroken || !imageSrc) {
-                    // Fallback to a professional construction placeholder if image is broken or missing
-                    imageSrc = 'https://images.unsplash.com/photo-1541888941259-7b9d9ef9cad0?auto=format&fit=crop&w=400&q=75';
-                  } else if (imageSrc.includes('unsplash.com')) {
-                    const baseUrl = imageSrc.split('?')[0];
-                    imageSrc = `${baseUrl}?auto=format&fit=crop&w=400&q=75`;
-                  }
+                  const showFallback = isBroken || !imageSrc;
 
                   return (
                     <article
@@ -319,13 +313,13 @@ export default function Products() {
                         className="relative flex h-44 items-center justify-center overflow-hidden"
                         style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}
                       >
-                        {imageSrc ? (
+                        {!showFallback ? (
                           <img
                             src={imageSrc}
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover object-center"
                             style={{ filter: isOutOfStock ? 'grayscale(1)' : 'none' }}
                             onError={() => {
                               if (!isBroken) {
@@ -334,7 +328,10 @@ export default function Products() {
                             }}
                           />
                         ) : (
-                          <ShieldCheck className="h-8 w-8" style={{ color: 'var(--color-muted)', opacity: 0.7 }} />
+                          <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
+                            <ShieldCheck className="h-10 w-10 mb-1" style={{ color: 'var(--color-muted)', opacity: 0.4 }} />
+                            <span className="text-xs font-semibold leading-tight line-clamp-2" style={{ color: 'var(--color-muted)', opacity: 0.6 }}>{product.name}</span>
+                          </div>
                         )}
 
                         {isOutOfStock ? (
