@@ -35,7 +35,7 @@ const SECTIONS = [
 
 export default function AdminDashboard() {
   const API_URL = import.meta.env.VITE_API_URL;
-  const { user } = useAuth();
+  const { user, token, logout } = useAuth();
   const toast = useToast();
 
   const [activeSection, setActiveSection] = useState('overview');
@@ -83,7 +83,9 @@ export default function AdminDashboard() {
     }
     setLoadingOrders(true);
     try {
-      const { data } = await axios.get(`${API_URL}/api/reservations`);
+      const { data } = await axios.get(`${API_URL}/api/reservations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setReservations(data);
     } catch (err) {
       setErrorMessage(err?.response?.data?.error || 'Failed to load orders.');
@@ -100,7 +102,9 @@ export default function AdminDashboard() {
     }
     setLoadingUsers(true);
     try {
-      const { data } = await axios.get(`${API_URL}/api/admin/users`);
+      const { data } = await axios.get(`${API_URL}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setUsers(data);
     } catch (err) {
       setErrorMessage(err?.response?.data?.error || 'Failed to load users.');
@@ -117,7 +121,9 @@ export default function AdminDashboard() {
     }
     setLoadingProducts(true);
     try {
-      const { data } = await axios.get(`${API_URL}/api/products?t=${Date.now()}`);
+      const { data } = await axios.get(`${API_URL}/api/products?t=${Date.now()}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setProducts(data);
     } catch (err) {
       setErrorMessage(err?.response?.data?.error || 'Failed to load products.');
@@ -145,7 +151,10 @@ export default function AdminDashboard() {
     if (!API_URL) return;
     setSavingId(id);
     try {
-      const { data } = await axios.patch(`${API_URL}/api/reservations/${id}/status`, { status: nextStatus });
+      const { data } = await axios.patch(`${API_URL}/api/reservations/${id}/status`, 
+        { status: nextStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setReservations(prev => prev.map(r => r.id === id ? data : r));
       toast.success(`Order #${id} marked as ${nextStatus}`);
     } catch (err) {
@@ -160,7 +169,10 @@ export default function AdminDashboard() {
     if (!API_URL) return;
     setUpdatingProductId(productId);
     try {
-      const { data } = await axios.patch(`${API_URL}/api/products/${productId}/stock`, { stockStatus, stockCount });
+      const { data } = await axios.patch(`${API_URL}/api/products/${productId}/stock`, 
+        { stockStatus, stockCount },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setProducts(prev => prev.map(p => p.id === productId ? data : p));
       toast.success('Stock updated!');
     } catch (err) {
@@ -174,7 +186,9 @@ export default function AdminDashboard() {
     if (!API_URL) return;
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      await axios.delete(`${API_URL}/api/admin/products/${productId}`);
+      await axios.delete(`${API_URL}/api/admin/products/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setProducts(prev => prev.filter(p => p.id !== productId));
       toast.success('Product deleted!');
     } catch (err) {
@@ -201,14 +215,21 @@ export default function AdminDashboard() {
         formData.append('image', editProductData.image);
       }
 
-      const { data } = await axios.put(`${API_URL}/api/admin/products/${editingProductId}`, formData);
+      const { data } = await axios.put(`${API_URL}/api/admin/products/${editingProductId}`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       setProducts(prev => prev.map(p => p.id === editingProductId ? data : p));
       toast.success('Product updated!');
       setEditingProductId(null);
       setEditProductData(null);
     } catch (err) {
-      toast.error(err?.response?.data?.error || 'Failed to update product.');
+      if (err.response?.status === 401) {
+        toast.error('Your session has expired. Please log in again.');
+        logout();
+      } else {
+        toast.error(err?.response?.data?.error || 'Failed to update product.');
+      }
     } finally {
       setSavingEdit(false);
     }
@@ -228,7 +249,9 @@ export default function AdminDashboard() {
         }
       });
       
-      const { data } = await axios.post(`${API_URL}/api/admin/products`, formData);
+      const { data } = await axios.post(`${API_URL}/api/admin/products`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setProducts(prev => [data, ...prev]);
       setShowAddProduct(false);
       setNewProduct({ name: '', category: CATEGORY_OPTIONS[0], subcategory: '', description: '', price: '', unit: '', brandName: '', stockCount: 100, image: null });

@@ -7,14 +7,20 @@ const { JWT_SECRET } = require('../config');
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized: No token provided.' });
+    return res.status(401).json({ error: 'Unauthorized: No token provided.', code: 'NO_TOKEN' });
   }
   const token = authHeader.split(' ')[1];
   try {
     req.user = jwt.verify(token, JWT_SECRET);
     next();
-  } catch {
-    return res.status(401).json({ error: 'Unauthorized: Invalid or expired token.' });
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Unauthorized: Token expired. Please log in again.', code: 'TOKEN_EXPIRED' });
+    }
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Unauthorized: Invalid token.', code: 'INVALID_TOKEN' });
+    }
+    return res.status(401).json({ error: 'Unauthorized: Authentication failed.', code: 'AUTH_FAILED' });
   }
 };
 
