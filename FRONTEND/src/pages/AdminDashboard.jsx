@@ -117,7 +117,7 @@ export default function AdminDashboard() {
     }
     setLoadingProducts(true);
     try {
-      const { data } = await axios.get(`${API_URL}/api/products`);
+      const { data } = await axios.get(`${API_URL}/api/products?t=${Date.now()}`);
       setProducts(data);
     } catch (err) {
       setErrorMessage(err?.response?.data?.error || 'Failed to load products.');

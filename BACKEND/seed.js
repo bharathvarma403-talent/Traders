@@ -17,6 +17,12 @@ function resolveSeedPassword(envName, label) {
 }
 
 async function main() {
+  const productCount = await prisma.product.count();
+  if (productCount > 0) {
+    console.log('Database already has products. Skipping seed to avoid overwriting production data.');
+    return;
+  }
+
   console.log('Clearing existing database tables...');
   await prisma.productRating.deleteMany();
   await prisma.reservation.deleteMany();

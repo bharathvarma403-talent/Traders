@@ -1,9 +1,8 @@
-const fs = require('fs');
-const path = require('path');
 const prisma = require('../db');
 const { notifyCatalogUpdate } = require('../utils/syncEmitter');
 const AppError = require('../utils/AppError');
 const { productUpsertSchema } = require('../schemas');
+const { uploadToCloud, deleteFromCloud } = require('../middleware/upload');
 
 // ── GET /api/admin/users ──────────────────────────────────────────────────────
 const getUsers = async (_req, res, next) => {
@@ -39,13 +38,15 @@ const createProduct = async (req, res, next) => {
       create: { name: brandName },
     });
 
+    const imageUrl = await uploadToCloud(req.file);
+
     const product = await prisma.product.create({
       data: {
         name, category, subcategory, description: description || null,
         price, unit, brandId: brand.id,
         stockCount: stockCount ?? 100,
         stockStatus: (stockCount ?? 100) > 0 ? 'In Stock' : 'Out of Stock',
-        imageUrl: `/uploads/${req.file.filename}`,
+        imageUrl,
       },
       include: { brand: true },
     });
@@ -86,12 +87,12 @@ const updateProduct = async (req, res, next) => {
     };
 
     if (req.file) {
-      updateData.imageUrl = `/uploads/${req.file.filename}`;
-      // Clean up old image if it exists and is a local file
-      if (oldProduct.imageUrl && oldProduct.imageUrl.startsWith('/uploads/')) {
-        const oldFileName = oldProduct.imageUrl.split('/').pop();
-        const oldFilePath = path.join(__dirname, '../../uploads', oldFileName);
-        if (fs.existsSync(oldFilePath)) fs.unlinkSync(oldFilePath);
+      const newImageUrl = await uploadToCloud(req.file);
+      updateData.imageUrl = newImageUrl;
+      
+      // Clean up old image if it exists in cloud
+      if (oldProduct.imageUrl) {
+        await deleteFromCloud(oldProduct.imageUrl);
       }
     }
 
@@ -120,11 +121,9 @@ const deleteProduct = async (req, res, next) => {
 
     await prisma.product.delete({ where: { id: productId } });
 
-    // Clean up associated local image
-    if (oldProduct.imageUrl && oldProduct.imageUrl.startsWith('/uploads/')) {
-      const oldFileName = oldProduct.imageUrl.split('/').pop();
-      const oldFilePath = path.join(__dirname, '../../uploads', oldFileName);
-      if (fs.existsSync(oldFilePath)) fs.unlinkSync(oldFilePath);
+    // Clean up associated cloud image
+    if (oldProduct.imageUrl) {
+      await deleteFromCloud(oldProduct.imageUrl);
     }
 
     notifyCatalogUpdate();

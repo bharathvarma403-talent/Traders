@@ -31,15 +31,8 @@ export default function Products() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState(() => {
-    try {
-      const cached = localStorage.getItem('vt_catalog_cache');
-      return cached ? JSON.parse(cached) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [loading, setLoading] = useState(products.length === 0);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,23 +58,15 @@ export default function Products() {
       setErrorMessage('');
 
       try {
-        const { data } = await axios.get(`${API_URL}/api/products`);
+        const { data } = await axios.get(`${API_URL}/api/products?t=${Date.now()}`);
         if (cancelled) return;
         
         const productsData = Array.isArray(data) ? data : [];
         setProducts(productsData);
-        
-        // Cache the result for instant load next time
-        localStorage.setItem('vt_catalog_cache', JSON.stringify(productsData));
       } catch (error) {
         if (cancelled) return;
-        // If we have cached data, don't clear it on error, just warn the user
-        if (products.length === 0) {
-          setProducts([]);
-          setErrorMessage(error?.response?.data?.error || 'Unable to load the materials catalog right now.');
-        } else {
-          console.warn('Background refresh failed, using cached data:', error);
-        }
+        setProducts([]);
+        setErrorMessage(error?.response?.data?.error || 'Unable to load the materials catalog right now.');
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -108,12 +93,11 @@ export default function Products() {
         if (data.type === 'CATALOG_UPDATED') {
           setIsRefreshing(true);
           // Add a cache buster query parameter to guarantee a fresh pull bypasses CDN edge logic
-          axios.get(`${API_URL}/api/products?forceRefresh=true`, {
+          axios.get(`${API_URL}/api/products?forceRefresh=true&t=${Date.now()}`, {
             headers: { 'Cache-Control': 'no-cache' }
           }).then(({ data: freshData }) => {
             if (Array.isArray(freshData)) {
               setProducts(freshData);
-              localStorage.setItem('vt_catalog_cache', JSON.stringify(freshData));
               setIsRefreshing(false);
             }
           }).catch(() => setIsRefreshing(false));
