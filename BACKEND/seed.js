@@ -77,17 +77,17 @@ async function main() {
     { name: 'High Speed Ceiling Fan 1200mm', category: 'Electrical', subcategory: 'Fans', description: 'Energy efficient ceiling fan with anti-dust coating.', price: 2150, unit: 'piece', brandId: crompton.id, rating: 4, stockCount: 25, imageUrl: 'https://images.unsplash.com/photo-1618037341584-c5a7559e0000' },
 
     // --- PLUMBING ---
-    { name: 'CPVC SDR 11 Pipe 1-Inch', category: 'Plumbing', subcategory: 'Pipes', description: 'High-grade CPVC pipe for hot/cold water. Selling per 10ft length.', price: 420, unit: 'length', brandId: ashirvad.id, rating: 5, stockCount: 200, imageUrl: 'https://images.unsplash.com/photo-B0jijv2X-U8' },
+    { name: 'CPVC SDR 11 Pipe 1-Inch', category: 'Plumbing', subcategory: 'Pipes', description: 'High-grade CPVC pipe for hot/cold water. Selling per 10ft length.', price: 420, unit: 'length', brandId: ashirvad.id, rating: 5, stockCount: 200, imageUrl: '/uploads/cpvc_pipe_1inch.png' },
     { name: 'UPVC Schedule 40 Pipe 2-Inch', category: 'Plumbing', subcategory: 'Pipes', description: 'UPVC drainage and agricultural pipe. 20ft length.', price: 850, unit: 'length', brandId: finolex.id, rating: 4, stockCount: 150, imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a' },
     { name: 'Brass Ball Valve 1-Inch', category: 'Plumbing', subcategory: 'Valves', description: 'Heavy duty solid brass ball valve.', price: 650, unit: 'piece', brandId: ashirvad.id, rating: 5, stockCount: 80, imageUrl: 'https://images.unsplash.com/photo-1592383823674-ba5e80dc6810' },
     { name: 'Triple Layer Water Tank 1000L', category: 'Plumbing', subcategory: 'Tanks', description: 'UV protected triple layer plastic reservoir.', price: 6500, unit: 'piece', brandId: nandi.id, rating: 5, stockCount: 15, imageUrl: 'https://images.unsplash.com/photo-1563330232-57114bb0839c' },
 
     // --- CEMENT ---
-    { name: 'OPC 53 Grade Cement', category: 'Cement', subcategory: 'OPC', description: 'Ordinary Portland Cement for heavy concrete structures. 50kg bag.', price: 430, unit: 'bag', brandId: ultratech.id, rating: 5, stockCount: 300, imageUrl: 'https://images.unsplash.com/photo-3H26DnkYLHo' },
-    { name: 'PPC Blended Cement', category: 'Cement', subcategory: 'PPC', description: 'Portland Pozzolana Cement for plastering and brickwork. 50kg bag.', price: 390, unit: 'bag', brandId: ambuja.id, rating: 4, stockCount: 400, imageUrl: 'https://images.unsplash.com/photo-3H26DnkYLHo' },
+    { name: 'OPC 53 Grade Cement', category: 'Cement', subcategory: 'OPC', description: 'Ordinary Portland Cement for heavy concrete structures. 50kg bag.', price: 430, unit: 'bag', brandId: ultratech.id, rating: 5, stockCount: 300, imageUrl: '/uploads/ultratech_cement_50kg.png' },
+    { name: 'PPC Blended Cement', category: 'Cement', subcategory: 'PPC', description: 'Portland Pozzolana Cement for plastering and brickwork. 50kg bag.', price: 390, unit: 'bag', brandId: ambuja.id, rating: 4, stockCount: 400, imageUrl: '/uploads/ambuja_cement_50kg.jpg' },
 
     // --- PAINT ---
-    { name: 'Royal Emulsion Interior Paint', category: 'Paint', subcategory: 'Interior Emulsion', description: 'Premium luxury emulsion for interior walls. 20L Bucket.', price: 4800, unit: 'bucket', brandId: asianPaints.id, rating: 5, stockCount: 40, imageUrl: 'https://images.unsplash.com/photo-NFamNeP3OjA' },
+    { name: 'Royal Emulsion Interior Paint', category: 'Paint', subcategory: 'Interior Emulsion', description: 'Premium luxury emulsion for interior walls. 20L Bucket.', price: 4800, unit: 'bucket', brandId: asianPaints.id, rating: 5, stockCount: 40, imageUrl: '/uploads/asian_paints_royale_emulsion.png' },
     { name: 'WeatherCoat Exterior Paint', category: 'Paint', subcategory: 'Exterior Emulsion', description: 'All weather protection exterior paint. 20L Bucket.', price: 4200, unit: 'bucket', brandId: berger.id, rating: 4, stockCount: 50, imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f' },
     { name: 'Acrylic Wall Putty', category: 'Paint', subcategory: 'Putty', description: 'Smooth wall putty. 40kg bag.', price: 850, unit: 'bag', brandId: asianPaints.id, rating: 4, stockCount: 100, imageUrl: 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b' },
     { name: 'Professional Paint Roller 9-Inch', category: 'Paint', subcategory: 'Accessories', description: 'Microfiber professional wall roller.', price: 250, unit: 'piece', brandId: generic.id, rating: 4, stockCount: 80, imageUrl: 'https://images.unsplash.com/photo-1596700813352-7efc9043ecb1' },
@@ -98,11 +98,11 @@ async function main() {
     { name: 'Binding Wire (GI)', category: 'Steel', subcategory: 'Hardware', description: 'Galvanized iron binding wire. Sold per Kg.', price: 85, unit: 'kg', brandId: generic.id, rating: 4, stockCount: 500, imageUrl: '/uploads/binding_wire_gi.png' },
 
     // --- SAND ---
-    { name: 'Filtered River Sand', category: 'Sand', subcategory: 'River Sand', description: 'Fine-grade river sand for high quality plastering. Sold per Tractor Load (approx 3 tons).', price: 3500, unit: 'load', brandId: generic.id, rating: 4, stockCount: 20, imageUrl: 'https://images.unsplash.com/photo-Mv9hjnEUHR4' },
+    { name: 'Filtered River Sand', category: 'Sand', subcategory: 'River Sand', description: 'Fine-grade river sand for high quality plastering. Sold per Tractor Load (approx 3 tons).', price: 3500, unit: 'load', brandId: generic.id, rating: 4, stockCount: 20, imageUrl: '/uploads/river_sand.png' },
     { name: 'Manufactured M-Sand', category: 'Sand', subcategory: 'M-Sand', description: 'Crushed rock sand for structural concrete. Sold per Tractor Load.', price: 2800, unit: 'load', brandId: generic.id, rating: 5, stockCount: 40, imageUrl: '/uploads/m_sand_pile.png' },
 
     // --- BRICKS ---
-    { name: 'Premium Red Clay Bricks', category: 'Bricks', subcategory: 'Clay', description: 'Kiln baked standard red bricks. Sold per 1000 pieces.', price: 7500, unit: '1000 pieces', brandId: generic.id, rating: 4, stockCount: 15, imageUrl: 'https://images.unsplash.com/photo-BTwLNLxPjzk' },
+    { name: 'Premium Red Clay Bricks', category: 'Bricks', subcategory: 'Clay', description: 'Kiln baked standard red bricks. Sold per 1000 pieces.', price: 7500, unit: '1000 pieces', brandId: generic.id, rating: 4, stockCount: 15, imageUrl: '/uploads/red_clay_bricks.png' },
     { name: 'Solid Concrete Blocks 6-Inch', category: 'Bricks', subcategory: 'Concrete', description: 'Standard 6-inch solid blocks for compound walls. Sold per piece.', price: 42, unit: 'piece', brandId: generic.id, rating: 5, stockCount: 5000, imageUrl: 'https://images.unsplash.com/photo-1601628828688-632f38a5a7d0' },
 
     // --- TOOLS ---
