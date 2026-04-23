@@ -72,11 +72,13 @@ export default function Home() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12">
               {[
                 { name: 'Asian Paints', logo: '/images/brands/asian_paints.png' },
-                { name: 'Nagarjuna', logo: '/images/brands/nagarjuna.png' },
+                { name: 'JSW NeoSteel', logo: '/images/brands/jsw.png' },
                 { name: 'UltraTech', logo: '/images/brands/ultratech.png' },
                 { name: 'Ramco', logo: '/images/brands/ramco.png' },
                 { name: 'Supreme', logo: '/images/brands/supreme.png' },
                 { name: 'Finolex', logo: '/images/brands/finolex.png' },
+                { name: 'Senator', logo: '/images/brands/senator.png' },
+                { name: 'Nagarjuna', logo: '/images/brands/nagarjuna.png' },
               ].map(brand => (
                 <div key={brand.name} className="flex flex-col items-center gap-4 group transition-transform duration-300 hover:-translate-y-1">
                   <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center p-3 shadow-lg ring-1 ring-black/5 overflow-hidden">

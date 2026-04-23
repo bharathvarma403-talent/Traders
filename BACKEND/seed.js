@@ -65,6 +65,7 @@ async function main() {
   const jsw = await createBrand('JSW NeoSteel');
   const bosch = await createBrand('Bosch');
   const stanley = await createBrand('Stanley');
+  const senator = await createBrand('Senator');
   const generic = await createBrand('Vasavi Supply');
 
   const products = [
@@ -92,13 +93,13 @@ async function main() {
     { name: 'Professional Paint Roller 9-Inch', category: 'Paint', subcategory: 'Accessories', description: 'Microfiber professional wall roller.', price: 250, unit: 'piece', brandId: generic.id, rating: 4, stockCount: 80, imageUrl: 'https://images.unsplash.com/photo-1596700813352-7efc9043ecb1' },
 
     // --- STEEL ---
-    { name: 'TMT Rebar 8mm / Fe550D', category: 'Steel', subcategory: 'TMT Bars', description: 'Thermo Mechanically Treated bar for RC construction. Sold per piece (12m).', price: 280, unit: 'length', brandId: tata.id, rating: 5, stockCount: 1500, imageUrl: 'https://images.unsplash.com/photo-ARW8QOYR_bI' },
-    { name: 'TMT Rebar 12mm / Fe550D', category: 'Steel', subcategory: 'TMT Bars', description: 'Thermo Mechanically Treated heavy beam bar. Sold per piece (12m).', price: 620, unit: 'length', brandId: jsw.id, rating: 5, stockCount: 1000, imageUrl: 'https://images.unsplash.com/photo-ARW8QOYR_bI' },
-    { name: 'Binding Wire (GI)', category: 'Steel', subcategory: 'Hardware', description: 'Galvanized iron binding wire. Sold per Kg.', price: 85, unit: 'kg', brandId: generic.id, rating: 4, stockCount: 500, imageUrl: 'https://images.unsplash.com/photo-1558223393-27150a00e57d' },
+    { name: 'TMT Rebar 8mm / Fe550D', category: 'Steel', subcategory: 'TMT Bars', description: 'Thermo Mechanically Treated bar for RC construction. Sold per piece (12m).', price: 280, unit: 'length', brandId: tata.id, rating: 5, stockCount: 1500, imageUrl: '/uploads/tata_tiscon_bars.png' },
+    { name: 'TMT Rebar 12mm / Fe550D', category: 'Steel', subcategory: 'TMT Bars', description: 'Thermo Mechanically Treated heavy beam bar. Sold per piece (12m).', price: 620, unit: 'length', brandId: jsw.id, rating: 5, stockCount: 1000, imageUrl: '/uploads/jsw_neosteel_bars.png' },
+    { name: 'Binding Wire (GI)', category: 'Steel', subcategory: 'Hardware', description: 'Galvanized iron binding wire. Sold per Kg.', price: 85, unit: 'kg', brandId: generic.id, rating: 4, stockCount: 500, imageUrl: '/uploads/binding_wire_gi.png' },
 
     // --- SAND ---
     { name: 'Filtered River Sand', category: 'Sand', subcategory: 'River Sand', description: 'Fine-grade river sand for high quality plastering. Sold per Tractor Load (approx 3 tons).', price: 3500, unit: 'load', brandId: generic.id, rating: 4, stockCount: 20, imageUrl: 'https://images.unsplash.com/photo-Mv9hjnEUHR4' },
-    { name: 'Manufactured M-Sand', category: 'Sand', subcategory: 'M-Sand', description: 'Crushed rock sand for structural concrete. Sold per Tractor Load.', price: 2800, unit: 'load', brandId: generic.id, rating: 5, stockCount: 40, imageUrl: 'https://images.unsplash.com/photo-Mv9hjnEUHR4' },
+    { name: 'Manufactured M-Sand', category: 'Sand', subcategory: 'M-Sand', description: 'Crushed rock sand for structural concrete. Sold per Tractor Load.', price: 2800, unit: 'load', brandId: generic.id, rating: 5, stockCount: 40, imageUrl: '/uploads/m_sand_pile.png' },
 
     // --- BRICKS ---
     { name: 'Premium Red Clay Bricks', category: 'Bricks', subcategory: 'Clay', description: 'Kiln baked standard red bricks. Sold per 1000 pieces.', price: 7500, unit: '1000 pieces', brandId: generic.id, rating: 4, stockCount: 15, imageUrl: 'https://images.unsplash.com/photo-BTwLNLxPjzk' },
@@ -107,7 +108,7 @@ async function main() {
     // --- TOOLS ---
     { name: 'Professional Impact Drill 600W', category: 'Tools', subcategory: 'Power Tools', description: 'Heavy duty rotary impact drill for masonry and wood.', price: 3200, unit: 'piece', brandId: bosch.id, rating: 5, stockCount: 12, imageUrl: 'https://images.unsplash.com/photo-1504148455328-c376907d081c' },
     { name: 'Claw Hammer steel shaft', category: 'Tools', subcategory: 'Hand Tools', description: 'Drop forged steel claw hammer with rubber grip.', price: 450, unit: 'piece', brandId: stanley.id, rating: 4, stockCount: 30, imageUrl: 'https://images.unsplash.com/photo-1626071490278-f2b7a0d4c6d6' },
-    { name: 'Measuring Tape 5m/16ft', category: 'Tools', subcategory: 'Measuring', description: 'Industrial grade measuring retractable tape.', price: 220, unit: 'piece', brandId: stanley.id, rating: 4, stockCount: 50, imageUrl: 'https://images.unsplash.com/photo-1521191024546-b39174afdbac' },
+    { name: 'Measuring Tape 5m/16ft', category: 'Tools', subcategory: 'Measuring', description: 'Industrial grade measuring retractable tape.', price: 220, unit: 'piece', brandId: senator.id, rating: 4, stockCount: 50, imageUrl: '/uploads/measuring_tape_senator.png' },
 
     // --- HARDWARE ---
     { name: 'Self Tapping Steel Screws (Box of 100)', category: 'Hardware', subcategory: 'Fasteners', description: 'Zinc plated Philip head screws. Box of 100.', price: 150, unit: 'box', brandId: generic.id, rating: 4, stockCount: 200, imageUrl: 'https://images.unsplash.com/photo-1597500589139-43c2cbb6db58' },
