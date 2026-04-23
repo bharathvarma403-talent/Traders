@@ -13,14 +13,7 @@ const getProducts = async (req, res, next) => {
     });
 
     if (isProduction) {
-      const isForcedRefresh =
-        req.headers['cache-control'] === 'no-cache' || req.query.forceRefresh === 'true';
-      res.setHeader(
-        'Cache-Control',
-        isForcedRefresh
-          ? 'no-cache, no-store, must-revalidate'
-          : 'public, max-age=0, s-maxage=30, stale-while-revalidate=120'
-      );
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
 
     res.json(products);
