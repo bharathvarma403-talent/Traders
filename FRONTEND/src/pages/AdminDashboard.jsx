@@ -215,6 +215,7 @@ export default function AdminDashboard() {
         formData.append('image', editProductData.image);
       }
 
+      console.log('ImageFile type:', typeof editProductData.image, editProductData.image instanceof File);
       const { data } = await axios.put(`${API_URL}/api/admin/products/${editingProductId}`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -249,6 +250,7 @@ export default function AdminDashboard() {
         }
       });
       
+      console.log('ImageFile type:', typeof newProduct.image, newProduct.image instanceof File);
       const { data } = await axios.post(`${API_URL}/api/admin/products`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });

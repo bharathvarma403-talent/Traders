@@ -4,7 +4,6 @@ const morgan = require('morgan');
 const cors = require('cors');
 
 const { isProduction, FRONTEND_URL } = require('./config');
-const { uploadDir } = require('./middleware/upload');
 const { syncEmitter } = require('./utils/syncEmitter');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -54,9 +53,6 @@ app.use(
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
-
-// ── Static uploads ────────────────────────────────────────────────────────────
-app.use('/uploads', express.static(uploadDir));
 
 // ── SSE — Real-time catalog sync ──────────────────────────────────────────────
 app.get('/api/sync/catalog', (req, res) => {
