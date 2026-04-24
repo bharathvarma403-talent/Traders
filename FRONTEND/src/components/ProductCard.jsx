@@ -119,9 +119,13 @@ export default function ProductCard({ product, onReserve, isBroken, onImageError
           type="button"
           onClick={() => onReserve(product)}
           disabled={isOutOfStock}
-          className="btn-premium w-full text-xs py-3"
+          className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 w-full ${
+            isOutOfStock 
+              ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' 
+              : 'bg-yellow-500 text-black hover:bg-yellow-400 hover:scale-[1.02] active:scale-95 shadow-xl shadow-yellow-500/10'
+          }`}
         >
-          <ShoppingCart className="h-3.5 w-3.5" />
+          <ShoppingCart className="h-4 w-4" />
           {isOutOfStock ? 'RESTOCKING' : 'RESERVE NOW'}
         </button>
       </div>
