@@ -36,7 +36,7 @@ const uploadToCloud = async (file) => {
   const uniqueName = `product-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname).toLowerCase()}`;
   
   const { data, error } = await supabase.storage
-    .from('product-images')
+    .from('products')
     .upload(uniqueName, file.buffer, {
       contentType: file.mimetype,
       upsert: false
@@ -48,9 +48,10 @@ const uploadToCloud = async (file) => {
   }
 
   const { data: { publicUrl } } = supabase.storage
-    .from('product-images')
+    .from('products')
     .getPublicUrl(data.path);
 
+  console.log('Image uploaded to Supabase successfully:', publicUrl);
   return publicUrl;
 };
 
@@ -62,12 +63,12 @@ const deleteFromCloud = async (url) => {
   if (!supabase || !url) return;
   
   // Only attempt to delete if it's a supabase storage URL
-  if (!url.includes('supabase.co/storage/v1/object/public/product-images/')) return;
+  if (!url.includes('supabase.co/storage/v1/object/public/products/')) return;
 
   const fileName = url.split('/').pop();
   
   const { error } = await supabase.storage
-    .from('product-images')
+    .from('products')
     .remove([fileName]);
 
   if (error) {
