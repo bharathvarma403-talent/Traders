@@ -69,6 +69,9 @@ export default function Navbar() {
             {isAuthenticated && (
               <Link to="/orders" className={`text-xs font-bold uppercase tracking-widest transition-all ${isActive('/orders') ? 'text-yellow-500' : 'text-zinc-500 hover:text-white'}`}>Orders</Link>
             )}
+            {isAuthenticated && user?.role?.toUpperCase() === 'ADMIN' && (
+              <Link to="/admin/dashboard" className={`text-xs font-bold uppercase tracking-widest transition-all ${isActive('/admin') ? 'text-yellow-500' : 'text-zinc-500 hover:text-white'}`}>Admin</Link>
+            )}
           </div>
 
           {/* User Controls */}
@@ -92,6 +95,11 @@ export default function Navbar() {
                       <p className="text-[10px] font-bold text-zinc-500 truncate uppercase mt-1 tracking-wider">{user.email}</p>
                     </div>
                     <div className="py-2">
+                      {user?.role?.toUpperCase() === 'ADMIN' && (
+                        <Link to="/admin/dashboard" onClick={() => setAvatarOpen(false)} className="flex items-center gap-3 px-5 py-3 text-[11px] font-bold text-yellow-500 hover:bg-yellow-500/5 transition-all">
+                          <HardHat className="h-4 w-4" /> ADMIN DASHBOARD
+                        </Link>
+                      )}
                       <Link to="/orders" onClick={() => setAvatarOpen(false)} className="flex items-center gap-3 px-5 py-3 text-[11px] font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all">
                         <ClipboardList className="h-4 w-4" /> MY ORDERS
                       </Link>

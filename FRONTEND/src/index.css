@@ -74,28 +74,62 @@
 
 /* ── Buttons ────────────────────────────────────────────────────── */
 
-.btn-premium {
+.btn-primary {
   background: var(--color-accent);
   color: #000;
-  padding: 12px 28px;
+  padding: 12px 32px;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  box-shadow: 0 0 0 rgba(255, 215, 0, 0);
+  border: none;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
 }
 
-.btn-premium:hover {
+.btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
   filter: brightness(1.1);
 }
 
-.btn-premium:active {
-  transform: translateY(0);
+.btn-outline {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text);
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(4px);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-premium {
+  background: linear-gradient(135deg, var(--color-accent), #C5A000);
+  color: #000;
+  padding: 14px 36px;
+  border-radius: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-3d);
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────── */
