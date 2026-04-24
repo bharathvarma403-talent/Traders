@@ -11,7 +11,6 @@ export default function Navbar() {
   const location = useLocation();
   const avatarRef = useRef(null);
 
-  // Close avatar dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
       if (avatarRef.current && !avatarRef.current.contains(e.target)) setAvatarOpen(false);
@@ -25,24 +24,6 @@ export default function Navbar() {
     return location.pathname.startsWith(path);
   };
 
-  const navLinkStyle = (path) => ({
-    color: isActive(path) ? 'var(--color-text)' : 'var(--color-muted)',
-    fontWeight: isActive(path) ? 600 : 500,
-    borderBottom: isActive(path) ? '2px solid var(--color-accent)' : '2px solid transparent',
-    paddingBottom: '4px',
-    transition: 'all 0.2s ease',
-  });
-
-  const mobileActive = (path) => ({
-    color: isActive(path) ? 'var(--color-accent)' : 'var(--color-muted)',
-    fontWeight: isActive(path) ? 600 : 400,
-  });
-
-  const getInitial = () => {
-    if (!user?.name) return 'U';
-    return user.name.charAt(0).toUpperCase();
-  };
-
   const handleLogout = () => {
     logout();
     setAvatarOpen(false);
@@ -50,113 +31,77 @@ export default function Navbar() {
     navigate('/');
   };
 
-  return (
-    <nav style={{ backgroundColor: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}
-         className="sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex justify-between items-center h-16">
+  const getInitial = () => {
+    if (!user?.name) return 'U';
+    return user.name.charAt(0).toUpperCase();
+  };
 
-          {/* Owner Photo + Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            <img
-              src="/images/owner.png"
-              alt="Shop Owner"
-              className="h-9 w-9 rounded-full object-cover"
-              style={{ border: '2px solid var(--color-accent)' }}
-            />
-            <div className="flex items-center gap-2">
-              <HardHat style={{ color: 'var(--color-accent)' }} className="h-6 w-6" />
-              <span className="text-lg font-semibold tracking-wide" style={{ color: 'var(--color-text)' }}>
-                Vasavi <span style={{ color: 'var(--color-accent)' }}>Traders</span>
+  return (
+    <nav className="sticky top-0 z-50 glass">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex justify-between items-center h-20">
+          
+          {/* Logo Section */}
+          <Link to="/" className="flex items-center gap-4 group">
+            <div className="relative flex-shrink-0">
+              <img
+                src="/images/owner.png"
+                alt="Shop Owner"
+                className="w-10 h-10 rounded-full object-cover border-2 border-yellow-500/50 group-hover:border-yellow-500 transition-colors"
+              />
+              <div className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full p-0.5">
+                <HardHat className="h-3 w-3 text-black" />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold tracking-tight text-white leading-tight">
+                VASAVI <span className="text-yellow-500">TRADERS</span>
               </span>
+              <span className="text-[10px] font-bold tracking-[0.2em] text-zinc-500 uppercase">Industrial Materials</span>
             </div>
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link to="/" style={navLinkStyle('/')} className="text-sm hover:opacity-100 transition-opacity">Home</Link>
-            <Link to="/products" style={navLinkStyle('/products')} className="text-sm hover:opacity-100 transition-opacity">Products</Link>
-            <Link to="/contact" style={navLinkStyle('/contact')} className="text-sm hover:opacity-100 transition-opacity">Contact</Link>
-
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-10">
+            <Link to="/" className={`text-xs font-bold uppercase tracking-widest transition-all ${isActive('/') ? 'text-yellow-500' : 'text-zinc-500 hover:text-white'}`}>Home</Link>
+            <Link to="/products" className={`text-xs font-bold uppercase tracking-widest transition-all ${isActive('/products') ? 'text-yellow-500' : 'text-zinc-500 hover:text-white'}`}>Products</Link>
+            <Link to="/contact" className={`text-xs font-bold uppercase tracking-widest transition-all ${isActive('/contact') ? 'text-yellow-500' : 'text-zinc-500 hover:text-white'}`}>Contact</Link>
             {isAuthenticated && (
-              <Link to="/orders" style={navLinkStyle('/orders')} className="text-sm hover:opacity-100 transition-opacity">Orders</Link>
-            )}
-
-            {isAuthenticated && user?.role === 'ADMIN' && (
-              <Link to="/admin/dashboard" style={navLinkStyle('/admin')} className="text-sm hover:opacity-100 transition-opacity">Admin Panel</Link>
+              <Link to="/orders" className={`text-xs font-bold uppercase tracking-widest transition-all ${isActive('/orders') ? 'text-yellow-500' : 'text-zinc-500 hover:text-white'}`}>Orders</Link>
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* User Controls */}
+          <div className="hidden md:flex items-center gap-6">
             {!isAuthenticated ? (
-              <Link to="/login"
-                style={{ border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-                className="text-sm px-4 py-2 rounded-lg font-medium transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]">
-                Login
+              <Link to="/login" className="text-xs font-bold uppercase tracking-widest px-6 py-2.5 rounded-lg transition-all border border-white/10 hover:border-yellow-500/50 hover:bg-yellow-500/5 text-white">
+                Client Login
               </Link>
             ) : (
               <div ref={avatarRef} className="relative">
-                <button
-                  onClick={() => setAvatarOpen(!avatarOpen)}
-                  className="flex items-center gap-2 transition-all"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                >
-                  <div
-                    className="flex items-center justify-center rounded-full text-sm font-bold"
-                    style={{
-                      width: '38px', height: '38px',
-                      background: 'linear-gradient(135deg, var(--color-accent), #C5A000)',
-                      color: '#1a1500',
-                      boxShadow: '0 2px 8px rgba(255,215,0,0.25)',
-                      transition: 'box-shadow 0.2s ease',
-                    }}
-                  >
+                <button onClick={() => setAvatarOpen(!avatarOpen)} className="flex items-center gap-3 group">
+                  <div className="flex items-center justify-center rounded-lg text-sm font-bold w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 text-black shadow-lg shadow-yellow-500/20 group-hover:scale-105 transition-transform">
                     {getInitial()}
                   </div>
-                  <ChevronDown className="h-3.5 w-3.5" style={{
-                    color: 'var(--color-muted)',
-                    transform: avatarOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s ease',
-                  }} />
+                  <ChevronDown className={`h-3.5 w-3.5 text-zinc-500 transition-transform duration-300 ${avatarOpen ? 'rotate-180' : ''}`} />
                 </button>
-
                 {avatarOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-52 rounded-xl overflow-hidden shadow-2xl"
-                    style={{
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      animation: 'fadeSlideDown 0.15s ease-out',
-                    }}
-                  >
-                    <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{user.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{user.email}</p>
+                  <div className="absolute right-0 mt-4 w-60 rounded-xl glass shadow-2xl overflow-hidden">
+                    <div className="px-5 py-4 border-b border-white/5 bg-white/5">
+                      <p className="text-xs font-bold text-white truncate">{user.name}</p>
+                      <p className="text-[10px] font-bold text-zinc-500 truncate uppercase mt-1 tracking-wider">{user.email}</p>
                     </div>
-                    <div className="py-1">
-                      <Link to="/orders" onClick={() => setAvatarOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                        style={{ color: 'var(--color-muted)' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--color-text)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-muted)'; }}>
-                        <ClipboardList className="h-4 w-4" /> My Orders
+                    <div className="py-2">
+                      <Link to="/orders" onClick={() => setAvatarOpen(false)} className="flex items-center gap-3 px-5 py-3 text-[11px] font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all">
+                        <ClipboardList className="h-4 w-4" /> MY ORDERS
                       </Link>
-                      <Link to="/user-dashboard" onClick={() => setAvatarOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                        style={{ color: 'var(--color-muted)' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--color-text)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-muted)'; }}>
-                        <User className="h-4 w-4" /> My Profile
+                      <Link to="/user-dashboard" onClick={() => setAvatarOpen(false)} className="flex items-center gap-3 px-5 py-3 text-[11px] font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all">
+                        <User className="h-4 w-4" /> MY PROFILE
                       </Link>
                     </div>
-                    <div style={{ borderTop: '1px solid var(--color-border)' }} className="py-1">
-                      <button onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm w-full transition-colors"
-                        style={{ color: '#f87171', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.06)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        <LogOut className="h-4 w-4" /> Logout
+                    <div className="py-2 border-t border-white/5">
+                      <button onClick={handleLogout} className="flex items-center gap-3 px-5 py-3 text-[11px] font-bold text-red-400 hover:bg-red-500/10 w-full transition-all text-left">
+                        <LogOut className="h-4 w-4" /> LOGOUT
                       </button>
                     </div>
                   </div>
@@ -165,49 +110,26 @@ export default function Navbar() {
             )}
           </div>
 
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            aria-label={isOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={isOpen}
-            className="md:hidden"
-            style={{ color: 'var(--color-muted)' }}>
-            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {/* Mobile Menu Toggle */}
+          <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-zinc-500">
+            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {isOpen && (
-        <div style={{ backgroundColor: 'var(--color-bg)', borderTop: '1px solid var(--color-border)' }} className="md:hidden px-6 py-4 space-y-3">
-          <Link to="/" className="block text-sm py-2" style={mobileActive('/')} onClick={() => setIsOpen(false)}>Home</Link>
-          <Link to="/products" className="block text-sm py-2" style={mobileActive('/products')} onClick={() => setIsOpen(false)}>Products</Link>
-          <Link to="/contact" className="block text-sm py-2" style={mobileActive('/contact')} onClick={() => setIsOpen(false)}>Contact</Link>
-
-          {isAuthenticated && (
-            <Link to="/orders" className="block text-sm py-2" style={mobileActive('/orders')} onClick={() => setIsOpen(false)}>Orders</Link>
-          )}
-
-          {isAuthenticated && user?.role === 'ADMIN' && (
-            <Link to="/admin/dashboard" className="block text-sm py-2" style={mobileActive('/admin')} onClick={() => setIsOpen(false)}>Admin Panel</Link>
-          )}
-
-          <div className="pt-4 border-t border-white/10">
+        <div className="md:hidden glass border-t border-white/5 px-6 py-6 space-y-4">
+          <Link to="/" onClick={() => setIsOpen(false)} className={`block text-xs font-bold uppercase tracking-widest ${isActive('/') ? 'text-yellow-500' : 'text-zinc-500'}`}>Home</Link>
+          <Link to="/products" onClick={() => setIsOpen(false)} className={`block text-xs font-bold uppercase tracking-widest ${isActive('/products') ? 'text-yellow-500' : 'text-zinc-500'}`}>Products</Link>
+          <Link to="/contact" onClick={() => setIsOpen(false)} className={`block text-xs font-bold uppercase tracking-widest ${isActive('/contact') ? 'text-yellow-500' : 'text-zinc-500'}`}>Contact</Link>
+          <div className="pt-4 border-t border-white/5">
             {!isAuthenticated ? (
-              <Link to="/login" className="block text-sm py-2 font-semibold text-[var(--color-accent)]" onClick={() => setIsOpen(false)}>Login</Link>
+              <Link to="/login" onClick={() => setIsOpen(false)} className="block text-xs font-bold uppercase tracking-widest text-yellow-500">Client Login</Link>
             ) : (
-              <>
-                <div className="flex items-center gap-3 py-2 mb-2">
-                  <div className="flex items-center justify-center rounded-full text-sm font-bold"
-                    style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, var(--color-accent), #C5A000)', color: '#1a1500' }}>
-                    {getInitial()}
-                  </div>
-                  <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{user.name}</span>
-                </div>
-                <Link to="/user-dashboard" className="block text-sm py-2" style={{ color: 'var(--color-muted)' }} onClick={() => setIsOpen(false)}>My Profile</Link>
-                <button onClick={handleLogout} className="flex items-center gap-2 text-sm py-2 font-semibold text-red-400" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </button>
-              </>
+              <button onClick={handleLogout} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-red-400">
+                <LogOut className="h-4 w-4" /> LOGOUT
+              </button>
             )}
           </div>
         </div>

@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowLeft, Search, ShieldCheck, ShoppingCart } from 'luc
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
+import ProductCard from '../components/ProductCard';
 import { useAuth } from '../utils/AuthContext';
 
 const CATEGORY_MARKERS = {
@@ -271,125 +272,21 @@ export default function Products() {
                 No products match your search.
               </p>
             ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredProducts.map((product) => {
-                  const isOutOfStock = product.stockStatus === 'Out of Stock';
-                  
-                  // Optimize image URLs: request smaller width and lower quality for thumbnails
-                  let imageSrc = product.imageUrl?.startsWith('/uploads')
-                    ? `${API_URL}${product.imageUrl}`
-                    : product.imageUrl;
-                  
-                  const isBroken = brokenImages.has(product.id);
-                  const showFallback = isBroken || !imageSrc;
-
-                  return (
-                    <article
-                      key={product.id}
-                      className="flex flex-col overflow-hidden rounded-2xl transition-all duration-300"
-                      style={{
-                        background: 'var(--color-surface)',
-                        border: '1px solid var(--color-border)',
-                        opacity: isOutOfStock ? 0.7 : 1,
-                      }}
-                    >
-                      <div
-                        className="relative flex h-44 items-center justify-center overflow-hidden"
-                        style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}
-                      >
-                        {!showFallback ? (
-                          <img
-                            src={imageSrc}
-                            alt={product.name}
-                            loading="lazy"
-                            decoding="async"
-                            className="h-full w-full object-cover object-center"
-                            style={{ filter: isOutOfStock ? 'grayscale(1)' : 'none' }}
-                            onError={() => {
-                              if (!isBroken) {
-                                setBrokenImages(prev => new Set(prev).add(product.id));
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
-                            <ShieldCheck className="h-10 w-10 mb-1" style={{ color: 'var(--color-muted)', opacity: 0.4 }} />
-                            <span className="text-xs font-semibold leading-tight line-clamp-2" style={{ color: 'var(--color-muted)', opacity: 0.6 }}>{product.name}</span>
-                          </div>
-                        )}
-
-                        {isOutOfStock ? (
-                          <div
-                            className="absolute inset-0 flex items-center justify-center"
-                            style={{ background: 'rgba(0,0,0,0.52)' }}
-                          >
-                            <span
-                              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wider"
-                              style={{
-                                background: 'rgba(248,113,113,0.2)',
-                                border: '1px solid rgba(248,113,113,0.3)',
-                                color: '#fca5a5',
-                              }}
-                            >
-                              <AlertTriangle className="h-3.5 w-3.5" />
-                              Out of Stock
-                            </span>
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="flex flex-1 flex-col p-5">
-                        <div className="mb-3 flex items-start justify-between gap-3">
-                          <span
-                            className="text-xs font-semibold uppercase tracking-wider"
-                            style={{ color: 'var(--color-accent)' }}
-                          >
-                            {product.category}
-                          </span>
-                          <span
-                            className="rounded px-2 py-0.5 text-xs"
-                            style={{
-                              background: 'var(--color-bg)',
-                              color: 'var(--color-muted)',
-                              border: '1px solid var(--color-border)',
-                            }}
-                          >
-                            {product.brand?.name || 'Unbranded'}
-                          </span>
-                        </div>
-
-                        <h3 className="mb-1.5 font-semibold" style={{ color: 'var(--color-text)' }}>
-                          {product.name}
-                        </h3>
-                        <p className="mb-4 flex-1 text-sm" style={{ color: 'var(--color-muted)' }}>
-                          {product.description || 'No description available.'}
-                        </p>
-
-                        <div className="mb-4 text-base font-semibold" style={{ color: 'var(--color-text)' }}>
-                          {formatPrice(product.price)}
-                          <span className="ml-1 text-xs" style={{ color: 'var(--color-muted)' }}>
-                            / {product.unit || 'unit'}
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleReserveClick(product)}
-                          disabled={isOutOfStock}
-                          className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-all"
-                          style={{
-                            background: isOutOfStock ? 'var(--color-border)' : 'var(--color-accent)',
-                            color: isOutOfStock ? 'var(--color-muted)' : '#1a1500',
-                            cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                          }}
-                        >
-                          <ShoppingCart className="h-4 w-4" />
-                          {isOutOfStock ? 'Out of Stock' : 'Reserve Now'}
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onReserve={handleReserveClick}
+                    isBroken={brokenImages.has(product.id)}
+                    onImageError={() => {
+                      if (!brokenImages.has(product.id)) {
+                        setBrokenImages(prev => new Set(prev).add(product.id));
+                      }
+                    }}
+                    API_URL={API_URL}
+                  />
+                ))}
               </div>
             )}
           </>

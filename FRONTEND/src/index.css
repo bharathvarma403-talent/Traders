@@ -1,15 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
-@import "tailwindcss";
-
 :root {
+  /* Industrial Color Palette */
   --color-accent: #FFD700;
-  --color-warm: #C5A000;
-  --color-bg: #050505;
-  --color-surface: #0F0F0B;
-  --color-border: #22221A;
-  --color-text: #FFFFFF;
-  --color-muted: #8E8E82;
-  --font-sans: 'Inter', 'Poppins', sans-serif;
+  --color-accent-dim: rgba(255, 214, 0, 0.15);
+  --color-bg: #0A0A0C;
+  --color-surface: #141416;
+  --color-surface-raised: #1C1C1F;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text: #F4F4F5;
+  --color-muted: #A1A1AA;
+  
+  /* Shadow Stacks for 3D Elevation */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-3d: 
+    0 1px 1px rgba(0,0,0,0.15), 
+    0 2px 2px rgba(0,0,0,0.15), 
+    0 4px 4px rgba(0,0,0,0.15), 
+    0 8px 8px rgba(0,0,0,0.15), 
+    0 16px 16px rgba(0,0,0,0.15);
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Poppins', sans-serif;
 }
 
 @layer base {
@@ -19,133 +31,74 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Poppins', sans-serif;
-    letter-spacing: -0.02em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.03em;
   }
 }
 
-.card {
-  background-color: var(--color-surface);
+/* ── 3D & Glassmorphism Utilities ────────────────────────────────── */
+
+.glass {
+  background: rgba(20, 20, 22, 0.7);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
 }
 
-.btn-primary {
-  background-color: var(--color-accent);
-  color: #1a1500;
-  padding: 10px 24px;
+.glass-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.shadow-premium {
+  box-shadow: var(--shadow-3d);
+}
+
+.tilt-effect {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.inner-glow {
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02);
+}
+
+/* ── Buttons ────────────────────────────────────────────────────── */
+
+.btn-premium {
+  background: var(--color-accent);
+  color: #000;
+  padding: 12px 28px;
   border-radius: 8px;
   font-weight: 600;
-  transition: opacity 0.2s, transform 0.15s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 0 0 rgba(255, 215, 0, 0);
 }
 
-.btn-primary:hover {
-  background-color: var(--color-warm);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+.btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2);
+  filter: brightness(1.1);
 }
 
-.btn-outline {
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.btn-outline:hover {
-  border-color: var(--color-accent);
-  background-color: rgba(255, 215, 0, 0.05);
-}
-
-.subtle-divider {
-  border-color: var(--color-border);
-}
-
-/* ── Toast Enter Animation ──────────────────────────────────────── */
-.toast-enter {
-  animation: toastSlideIn 0.3s ease-out forwards;
-}
-
-@keyframes toastSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(40px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-}
-
-/* ── Dropdown Fade-Slide ────────────────────────────────────────── */
-@keyframes fadeSlideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ── Products Reveal Animation ──────────────────────────────────── */
-.products-reveal {
-  animation: productsRevealIn 0.4s ease-out forwards;
-}
-
-@keyframes productsRevealIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Individual product card staggered animation */
-.products-reveal .product-card {
-  animation: productCardIn 0.5s ease-out both;
-}
-
-@keyframes productCardIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* ── Nova Floating Button Pulse ─────────────────────────────────── */
-.nova-float-btn .nova-pulse-ring {
-  animation: novaPulse 2s infinite ease-in-out;
-}
-
-@keyframes novaPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 0.7;
-  }
+.btn-premium:active {
+  transform: translateY(0);
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -153,22 +106,32 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
+  background: #27272a;
+  border-radius: 10px;
+  border: 2px solid var(--color-bg);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-muted);
+  background: #3f3f46;
 }
 
-/* ── Selection ──────────────────────────────────────────────────── */
-::selection {
-  background: rgba(255, 215, 0, 0.2);
-  color: var(--color-text);
+/* ── Animations ─────────────────────────────────────────────────── */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
-/* ── Focus Ring ─────────────────────────────────────────────────── */
-*:focus-visible {
-  outline: 2px solid rgba(75, 124, 243, 0.5);
-  outline-offset: 2px;
+.animate-float {
+  animation: float 5s ease-in-out infinite;
 }
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
