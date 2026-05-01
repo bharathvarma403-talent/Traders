@@ -42,6 +42,10 @@ const createProduct = async (req, res, next) => {
     const imageUrl = await uploadToCloud(req.file);
     console.log('Cloud URL saved:', imageUrl);
 
+    if (!imageUrl || !imageUrl.startsWith('http')) {
+      throw new Error('Image upload failed — imageUrl is invalid: ' + imageUrl);
+    }
+
     const product = await prisma.product.create({
       data: {
         name, category, subcategory, description: description || null,
@@ -93,6 +97,11 @@ const updateProduct = async (req, res, next) => {
       console.log('req.file received:', req.file?.originalname, req.file?.size);
       const newImageUrl = await uploadToCloud(req.file);
       console.log('Cloud URL saved:', newImageUrl);
+      
+      if (!newImageUrl || !newImageUrl.startsWith('http')) {
+        throw new Error('Image upload failed — imageUrl is invalid: ' + newImageUrl);
+      }
+      
       updateData.imageUrl = newImageUrl;
       
       // Clean up old image if it exists in cloud

@@ -399,6 +399,27 @@ export default function AdminDashboard() {
                 <div className="text-3xl font-bold" style={{ color: 'var(--color-accent)' }}>{products.length}</div>
               </div>
             </div>
+
+            {products.filter(p => p.imageUrl === 'https://placeholder.com/image.png' || !p.imageUrl?.startsWith('http')).length > 0 && (
+              <div 
+                className="rounded-2xl p-5 cursor-pointer hover:bg-red-500/10 transition-colors" 
+                style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)', color: '#fca5a5' }}
+                onClick={() => {
+                  setActiveSection('stock');
+                  setSearchTerm('placeholder.com/image.png'); // or we could filter by missing image
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="h-6 w-6 text-red-400" />
+                  <div>
+                    <h3 className="text-sm font-bold text-red-300">Missing Product Images</h3>
+                    <p className="text-xs text-red-200/80 mt-1">
+                      {products.filter(p => p.imageUrl === 'https://placeholder.com/image.png' || !p.imageUrl?.startsWith('http')).length} products currently have no image — click to fix
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -628,9 +649,12 @@ export default function AdminDashboard() {
                     )}
                   </div>
                   <div className="flex justify-end pt-2">
-                    <button type="submit" disabled={addingProduct} className="btn-primary flex items-center justify-center min-w-[120px] py-2.5 text-sm" style={{ opacity: addingProduct ? 0.7 : 1 }}>
-                      {addingProduct ? 'Adding...' : 'Add Product'}
-                    </button>
+                    <div className="flex flex-col items-end">
+                      <button type="submit" disabled={addingProduct || !newProduct.image} className="btn-primary flex items-center justify-center min-w-[120px] py-2.5 text-sm" style={{ opacity: (addingProduct || !newProduct.image) ? 0.7 : 1 }}>
+                        {addingProduct ? 'Adding...' : 'Add Product'}
+                      </button>
+                      {!newProduct.image && <p className="text-red-500 text-xs mt-2 font-semibold">An image is required to save product.</p>}
+                    </div>
                   </div>
                 </form>
               </div>
@@ -709,9 +733,12 @@ export default function AdminDashboard() {
                           <textarea required value={editProductData.description} onChange={e => setEditProductData({...editProductData, description: e.target.value})} rows="1" className="w-full rounded-lg px-2 py-1.5 text-sm outline-none" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }} />
                         </div>
                         <div className="flex justify-end pt-2">
-                          <button type="submit" disabled={savingEdit} className="btn-primary px-4 py-2 text-sm rounded-lg" style={{ opacity: savingEdit ? 0.7 : 1 }}>
-                            {savingEdit ? 'Saving...' : 'Save Changes'}
-                          </button>
+                          <div className="flex flex-col items-end">
+                            <button type="submit" disabled={savingEdit || (!editProductData.image && (!editProductData.imageUrl || editProductData.imageUrl === 'https://placeholder.com/image.png' || editProductData.imageUrl === '/images/placeholder.png'))} className="btn-primary px-4 py-2 text-sm rounded-lg" style={{ opacity: (savingEdit || (!editProductData.image && (!editProductData.imageUrl || editProductData.imageUrl === 'https://placeholder.com/image.png' || editProductData.imageUrl === '/images/placeholder.png'))) ? 0.7 : 1 }}>
+                              {savingEdit ? 'Saving...' : 'Save Changes'}
+                            </button>
+                            {(!editProductData.image && (!editProductData.imageUrl || editProductData.imageUrl === 'https://placeholder.com/image.png' || editProductData.imageUrl === '/images/placeholder.png')) && <p className="text-red-500 text-xs mt-2 font-semibold">A valid product image must be uploaded.</p>}
+                          </div>
                         </div>
                       </form>
                     ) : (

@@ -41,7 +41,7 @@ model Product {
   description  String?
   price        Float
   unit         String          @default("piece")
-  imageUrl     String?
+  imageUrl     String
   brandId      Int
   brand        Brand           @relation(fields: [brandId], references: [id])
   ratings      ProductRating[]

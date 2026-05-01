@@ -37,9 +37,7 @@ export default function ProductCard({ product, onReserve, isBroken, onImageError
   };
 
   const isOutOfStock = product.stockStatus === 'Out of Stock';
-  let imageSrc = product.imageUrl?.startsWith('/uploads')
-    ? `${API_URL}${product.imageUrl}`
-    : product.imageUrl;
+
 
   return (
     <motion.article
@@ -63,21 +61,14 @@ export default function ProductCard({ product, onReserve, isBroken, onImageError
         className="relative flex h-48 items-center justify-center overflow-hidden bg-[#0A0A0C]"
         style={{ transformStyle: "preserve-3d" }}
       >
-        {!isBroken && imageSrc ? (
           <motion.img
             style={{ transform: "translateZ(30px)" }}
-            src={imageSrc}
+            src={product.imageUrl}
             alt={product.name}
             loading="lazy"
             className="h-full w-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
-            onError={onImageError}
+            onError={(e) => { e.currentTarget.src = '/placeholder.png'; }}
           />
-        ) : (
-          <div style={{ transform: "translateZ(30px)" }} className="flex flex-col items-center justify-center gap-2 p-4 text-center opacity-40">
-            <ShieldCheck className="h-10 w-10" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">{product.name}</span>
-          </div>
-        )}
 
         {isOutOfStock && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] z-20">
