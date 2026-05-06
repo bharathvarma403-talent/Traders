@@ -1,0 +1,830 @@
+[
+  {
+    "id": "TC001",
+    "title": "Reserve an in-stock product for pickup",
+    "description": "This verifies that a shopper can create a pickup reservation from a product card and complete the reservation form successfully.",
+    "category": "Phone Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /products"
+      },
+      {
+        "type": "action",
+        "description": "Open an in-stock product's reservation form"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the reservation details with valid information"
+      },
+      {
+        "type": "action",
+        "description": "Submit the reservation form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a reservation confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the reservation appears as created"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Reserve a product for store pickup",
+    "description": "This verifies that a customer can submit a pickup reservation from a product card and receive a completion confirmation.",
+    "category": "Material Pickup Reservation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /products"
+      },
+      {
+        "type": "action",
+        "description": "Open the reservation form for an in-stock product"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the customer name field with a valid name"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone field with a valid phone number"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the quantity field with a valid quantity"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the pickup date field with a valid date"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the notes field with reservation notes"
+      },
+      {
+        "type": "action",
+        "description": "Submit the reservation form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a reservation success confirmation is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Open the products catalog from the homepage",
+    "description": "This verifies that a visitor can use the homepage navigation to reach the product catalog.",
+    "category": "Landing Page and Navigation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the products link in the navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the products catalog is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Browse products from the homepage",
+    "description": "This verifies that a shopper can move from the homepage into the product catalog and start browsing items.",
+    "category": "Phone Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to view products"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the product catalog is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Sign in with phone passcode and reach the customer area",
+    "description": "This verifies that a registered customer can sign in with a phone number and passcode and land in the customer account area.",
+    "category": "Phone Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Select the phone sign-in mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid phone number"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the passcode field with a 6-digit passcode"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the customer dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Open the login page from the homepage",
+    "description": "This verifies that a visitor can use the homepage navigation to reach the login page.",
+    "category": "Landing Page and Navigation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the login link in the navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login page is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Search and filter the product catalog",
+    "description": "This verifies that a shopper can narrow the catalog by searching and category filtering to find relevant materials.",
+    "category": "Phone Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /products"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the product search field with a valid material name"
+      },
+      {
+        "type": "action",
+        "description": "Select a category filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify matching products are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the catalog is narrowed to the selected category"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Access the admin dashboard from login",
+    "description": "This verifies that an admin user can sign in and reach the dashboard used to review reservations and stock metrics.",
+    "category": "Admin Portal and Controls",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Open the admin access mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the admin email field with a valid admin email"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the admin password field with a valid admin password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the admin access form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the admin dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Compare two products",
+    "description": "This verifies that a shopper can select two products and open the comparison view before choosing one to reserve.",
+    "category": "Phone Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /products"
+      },
+      {
+        "type": "action",
+        "description": "Select the first product for comparison"
+      },
+      {
+        "type": "action",
+        "description": "Select the second product for comparison"
+      },
+      {
+        "type": "action",
+        "description": "Open the comparison view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify two products are shown in the comparison view"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Sign in with email and reach the customer area",
+    "description": "This verifies that a registered customer can sign in with email and 6-digit passcode and land in their account area.",
+    "category": "Email Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Select the email sign-in mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with a valid customer email"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the passcode field with a valid 6-digit passcode"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the customer account area is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user is signed in"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Review reservation analytics and pickup lists in the admin dashboard",
+    "description": "This verifies that an admin can open the dashboard and review the reservation summary, pickup list, and stock metrics needed for operations.",
+    "category": "Admin Portal and Controls",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Open the admin access mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the admin email field with a valid admin email"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the admin password field with a valid admin password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the admin access form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify reservation analytics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify pickup list and stock metrics are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Filter products by category",
+    "description": "This verifies that a customer can switch product categories and see the catalog update accordingly.",
+    "category": "Product Filtering and Comparison",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /products"
+      },
+      {
+        "type": "action",
+        "description": "Select a product category tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the products for the selected category are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Register a new customer account",
+    "description": "This verifies that a new customer can complete registration and see a success confirmation.",
+    "category": "Customer Registration",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Select the registration mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the name field with a new customer name"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with a new customer email"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone field with a valid phone number"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the passcode field with a 6-digit passcode"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a registration success confirmation is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Show reservation required-field validation",
+    "description": "This verifies that the reservation form prevents submission until required details are provided.",
+    "category": "Material Pickup Reservation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /products"
+      },
+      {
+        "type": "action",
+        "description": "Open the reservation form for an in-stock product"
+      },
+      {
+        "type": "action",
+        "description": "Submit the reservation form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify reservation validation errors are visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC015",
+    "title": "Reset the catalog after searching or filtering",
+    "description": "This verifies that a customer can clear a search or switch back to the full catalog after narrowing results.",
+    "category": "Product Filtering and Comparison",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /products"
+      },
+      {
+        "type": "action",
+        "description": "Type a search query into the product search field"
+      },
+      {
+        "type": "action",
+        "description": "Clear the search field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the full product catalog is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC016",
+    "title": "Open the contact page from the homepage",
+    "description": "This verifies that a visitor can use the homepage navigation to reach the contact page.",
+    "category": "Landing Page and Navigation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the contact link in the navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the contact page is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC017",
+    "title": "Use Nova to ask a materials question",
+    "description": "This verifies that a shopper can ask Nova a materials question and receive an answer in the chat interface.",
+    "category": "Phone Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /nova"
+      },
+      {
+        "type": "action",
+        "description": "Type a materials question into the chat input"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the assistant response is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC018",
+    "title": "Ask a materials question and review the answer",
+    "description": "This verifies that a customer can ask Nova a construction question and see a helpful response in the chat.",
+    "category": "Nova AI Assistant Chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /nova"
+      },
+      {
+        "type": "action",
+        "description": "Type a construction materials question into the chat input"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify Nova's response is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the conversation shows the user's message and Nova's reply"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC019",
+    "title": "Open the Nova assistant from the homepage",
+    "description": "This verifies that a visitor can use the homepage navigation to reach the Nova assistant.",
+    "category": "Landing Page and Navigation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the Nova assistant link in the navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the Nova assistant page is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC020",
+    "title": "Open the contact page and view business details",
+    "description": "This verifies that a visitor can navigate to the contact page and see the business address, hours, map, and contact information.",
+    "category": "Phone Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /contact"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the business address is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the business hours, map, and contact details are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC021",
+    "title": "Continue a Nova conversation with a follow-up message",
+    "description": "This verifies that a customer can keep chatting with Nova after an initial response and see both turns in the thread.",
+    "category": "Nova AI Assistant Chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /nova"
+      },
+      {
+        "type": "action",
+        "description": "Type a construction materials question into the chat input"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "action",
+        "description": "Type a follow-up question into the chat input"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the chat shows multiple exchanged messages"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the latest Nova response is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC022",
+    "title": "Use Telugu voice dictation to send a question",
+    "description": "This verifies that a customer can dictate a question in Telugu and submit the transcribed message in Nova chat.",
+    "category": "Nova AI Assistant Chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /nova"
+      },
+      {
+        "type": "action",
+        "description": "Activate voice dictation"
+      },
+      {
+        "type": "action",
+        "description": "Speak a question in Telugu"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the dictated text appears in the chat input"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify Nova's response is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC023",
+    "title": "Upload a crack image for analysis",
+    "description": "This verifies that a customer can upload a structural crack image in Nova and see analysis guidance in the chat.",
+    "category": "Nova AI Assistant Chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /nova"
+      },
+      {
+        "type": "action",
+        "description": "Upload a structural crack image"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the uploaded image is shown in the conversation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify Nova's analysis or suggestion is displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC024",
+    "title": "Hear Nova's response playback",
+    "description": "This verifies that a customer can trigger audio playback after receiving a Nova response.",
+    "category": "Nova AI Assistant Chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /nova"
+      },
+      {
+        "type": "action",
+        "description": "Type a construction materials question into the chat input"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "action",
+        "description": "Start playback of Nova's response audio"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify audio playback is active"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the chat response remains visible while audio is playing"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC025",
+    "title": "Reject an invalid phone passcode",
+    "description": "This verifies that a customer sees a validation error when entering an invalid phone passcode and cannot proceed to the account area.",
+    "category": "Phone Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Select the phone sign-in mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid phone number"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the passcode field with an invalid passcode"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a passcode validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the customer dashboard is not displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC026",
+    "title": "Require all registration fields before creating an account",
+    "description": "This verifies that registration blocks submission until all required customer details are provided.",
+    "category": "Customer Registration",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Select the registration mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in only the name field with a new customer name"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify registration validation errors are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no success confirmation is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC027",
+    "title": "Show sign-in validation for invalid email or passcode",
+    "description": "This verifies that email sign-in shows validation feedback when the credentials are not acceptable.",
+    "category": "Email Authentication and Session",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Select the email sign-in mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with an invalid email value"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the passcode field with an invalid 6-digit value"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify sign-in validation errors are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the customer account area is not displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC028",
+    "title": "Show a validation state for empty chat submission",
+    "description": "This verifies that Nova prevents sending an empty message and shows a validation state.",
+    "category": "Nova AI Assistant Chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /nova"
+      },
+      {
+        "type": "action",
+        "description": "Send an empty message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation message is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no new chat message is added"
+      }
+    ],
+    "priority": "Low"
+  }
+]

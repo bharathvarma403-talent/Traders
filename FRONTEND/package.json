@@ -11,15 +11,13 @@
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.5.0",
     "axios": "^1.13.6",
     "framer-motion": "^12.36.0",
     "lucide-react": "^0.577.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.13.1",
-    "three": "^0.183.2"
+    "vasavi-traders-root": "file:.."
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
