@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ClipboardList, Package, Clock3, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { useAuth } from '../utils/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const getStatusStyles = (status) => {
   switch (status) {

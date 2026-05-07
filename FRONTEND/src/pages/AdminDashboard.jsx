@@ -4,24 +4,13 @@ import {
   CheckCircle2, Clock3, Package, RefreshCw, Search, ShieldCheck, XCircle,
   BarChart3, Mail, Users, Boxes, Settings, LayoutDashboard, Menu, X, ClipboardList, Plus, Trash2, Edit2
 } from 'lucide-react';
-import { useAuth } from '../utils/AuthContext';
-import { useToast } from '../utils/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { getStatusStyles, formatDate } from '../utils/formatting';
 
 const statusFilters = ['All', 'Pending', 'Accepted', 'Rejected', 'Completed'];
 
-const getStatusStyles = (status) => {
-  if (status === 'Accepted') return { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.24)', color: '#86efac' };
-  if (status === 'Rejected') return { background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.24)', color: '#fca5a5' };
-  if (status === 'Completed') return { background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.24)', color: '#93c5fd' };
-  return { background: 'rgba(250,204,21,0.12)', border: '1px solid rgba(250,204,21,0.24)', color: '#fde68a' };
-};
 
-const formatDate = (value, withTime = false) => {
-  if (!value) return 'N/A';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleString('en-IN', withTime ? { dateStyle: 'medium', timeStyle: 'short' } : { dateStyle: 'medium' });
-};
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -92,7 +81,7 @@ export default function AdminDashboard() {
     } finally {
       setLoadingOrders(false);
     }
-  }, [API_URL]);
+  }, [API_URL, token]);
 
   // ── Load Users ─────────────────────────────────────────
   const loadUsers = useCallback(async () => {
@@ -111,7 +100,7 @@ export default function AdminDashboard() {
     } finally {
       setLoadingUsers(false);
     }
-  }, [API_URL]);
+  }, [API_URL, token]);
 
   // ── Load Products ──────────────────────────────────────
   const loadProducts = useCallback(async () => {
@@ -130,7 +119,7 @@ export default function AdminDashboard() {
     } finally {
       setLoadingProducts(false);
     }
-  }, [API_URL]);
+  }, [API_URL, token]);
 
   useEffect(() => {
     loadReservations();
@@ -215,7 +204,6 @@ export default function AdminDashboard() {
         formData.append('image', editProductData.image);
       }
 
-      console.log('ImageFile type:', typeof editProductData.image, editProductData.image instanceof File);
       const { data } = await axios.put(`${API_URL}/api/admin/products/${editingProductId}`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -250,7 +238,6 @@ export default function AdminDashboard() {
         }
       });
       
-      console.log('ImageFile type:', typeof newProduct.image, newProduct.image instanceof File);
       const { data } = await axios.post(`${API_URL}/api/admin/products`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });

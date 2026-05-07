@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { useAuth } from '../utils/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { getStatusStyles, formatDate } from '../utils/formatting';
 
 const initialFormState = {
   phoneNumber: '',
@@ -21,48 +22,11 @@ const initialFormState = {
   notes: '',
 };
 
-const getStatusStyles = (status) => {
-  if (status === 'Accepted') {
-    return {
-      background: 'rgba(34,197,94,0.12)',
-      border: '1px solid rgba(34,197,94,0.24)',
-      color: '#86efac',
-    };
-  }
 
-  if (status === 'Rejected') {
-    return {
-      background: 'rgba(248,113,113,0.12)',
-      border: '1px solid rgba(248,113,113,0.24)',
-      color: '#fca5a5',
-    };
-  }
-
-  if (status === 'Completed') {
-    return {
-      background: 'rgba(59,130,246,0.12)',
-      border: '1px solid rgba(59,130,246,0.24)',
-      color: '#93c5fd',
-    };
-  }
-
-  return {
-    background: 'rgba(250,204,21,0.12)',
-    border: '1px solid rgba(250,204,21,0.24)',
-    color: '#fde68a',
-  };
-};
-
-const formatDate = (value, withTime = false) => {
-  if (!value) return 'Not set';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleString('en-IN', withTime ? { dateStyle: 'medium', timeStyle: 'short' } : { dateStyle: 'medium' });
-};
 
 export default function UserDashboard() {
   const API_URL = import.meta.env.VITE_API_URL;
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   const [products, setProducts] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -97,7 +61,9 @@ export default function UserDashboard() {
       setLoadingProducts(true);
 
       try {
-        const { data } = await axios.get(`${API_URL}/api/products`);
+        const { data } = await axios.get(`${API_URL}/api/products`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (cancelled) return;
         setProducts(Array.isArray(data) ? data : []);
         setFormData((current) => ({
@@ -130,7 +96,9 @@ export default function UserDashboard() {
       setRequestsError('');
 
       try {
-        const { data } = await axios.get(`${API_URL}/api/reservations`);
+        const { data } = await axios.get(`${API_URL}/api/reservations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!cancelled) setRequests(Array.isArray(data) ? data : []);
       } catch (error) {
         if (!cancelled) {
@@ -178,9 +146,13 @@ export default function UserDashboard() {
         pickupDate: formData.pickupDate,
         phoneNumber: formData.phoneNumber.trim(),
         notes: formData.notes.trim() || undefined,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      const { data } = await axios.get(`${API_URL}/api/reservations`);
+      const { data } = await axios.get(`${API_URL}/api/reservations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setRequests(Array.isArray(data) ? data : []);
       setFormMessage('Order request sent. You can track it in My Requests below.');
       setFormData((current) => ({

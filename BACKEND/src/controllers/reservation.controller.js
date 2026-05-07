@@ -1,4 +1,5 @@
 const reservationService = require('../services/reservation.service');
+const { reservationSchema } = require('../schemas');
 const { notifyCatalogUpdate } = require('../utils/syncEmitter');
 const AppError = require('../utils/AppError');
 
@@ -11,7 +12,6 @@ const createReservation = async (req, res, next) => {
       quantity: Number(req.body.quantity),
     };
 
-    const { reservationSchema } = require('../schemas');
     const parsed = reservationSchema.safeParse(body);
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues.map((e) => e.message).join('; ') });

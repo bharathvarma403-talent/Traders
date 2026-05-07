@@ -38,9 +38,8 @@ const createProduct = async (req, res, next) => {
       create: { name: brandName },
     });
 
-    console.log('req.file received:', req.file?.originalname, req.file?.size);
     const imageUrl = await uploadToCloud(req.file);
-    console.log('Cloud URL saved:', imageUrl);
+
 
     if (!imageUrl || !imageUrl.startsWith('http')) {
       throw new Error('Image upload failed — imageUrl is invalid: ' + imageUrl);
@@ -58,7 +57,6 @@ const createProduct = async (req, res, next) => {
     });
 
     notifyCatalogUpdate();
-    console.log('Product created with image:', product.imageUrl);
     res.status(201).json(product);
   } catch (err) {
     next(err);
@@ -94,9 +92,8 @@ const updateProduct = async (req, res, next) => {
     };
 
     if (req.file) {
-      console.log('req.file received:', req.file?.originalname, req.file?.size);
       const newImageUrl = await uploadToCloud(req.file);
-      console.log('Cloud URL saved:', newImageUrl);
+
       
       if (!newImageUrl || !newImageUrl.startsWith('http')) {
         throw new Error('Image upload failed — imageUrl is invalid: ' + newImageUrl);
@@ -117,7 +114,6 @@ const updateProduct = async (req, res, next) => {
     });
 
     notifyCatalogUpdate();
-    console.log('Product updated with image:', updated.imageUrl);
     res.json(updated);
   } catch (err) {
     if (err.code === 'P2025') return next(new AppError('Product not found.', 404));

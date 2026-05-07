@@ -6,7 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import ProductCard from '../components/ProductCard';
-import { useAuth } from '../utils/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const CATEGORY_MARKERS = {
   Bricks: 'BK',

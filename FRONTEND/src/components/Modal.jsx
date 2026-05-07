@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { X, CheckCircle, ShoppingCart, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../utils/AuthContext';
-import { useToast } from '../utils/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import axios from 'axios';
 
 export default function Modal({ isOpen, onClose, product }) {

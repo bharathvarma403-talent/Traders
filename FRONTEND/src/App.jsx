@@ -7,9 +7,9 @@ import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Orders from './pages/Orders';
 import Login from './pages/Login';
-import { AuthProvider } from './utils/AuthContext';
-import { ToastProvider } from './utils/ToastContext';
-import ProtectedRoute from './utils/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import NovaFloatingButton from './components/NovaFloatingButton';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
