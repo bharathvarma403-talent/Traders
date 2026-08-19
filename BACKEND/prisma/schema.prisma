@@ -12,16 +12,18 @@ datasource db {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  password     String?
-  phone        String?       @unique
-  googleId     String?       @unique
-  role         String        @default("USER") // "USER" or "ADMIN"
-  lastLoginAt  DateTime?
-  createdAt    DateTime      @default(now())
-  reservations Reservation[]
+  id             Int             @id @default(autoincrement())
+  name           String
+  email          String          @unique
+  password       String?
+  phone          String?         @unique
+  googleId       String?         @unique
+  role           String          @default("USER") // "USER" or "ADMIN"
+  lastLoginAt    DateTime?
+  createdAt      DateTime        @default(now())
+  reservations   Reservation[]
+  aiQueries      AiQuery[]
+  productRatings ProductRating[]
 
   @@index([role])
   @@index([createdAt])
@@ -34,19 +36,19 @@ model Brand {
 }
 
 model Product {
-  id           Int             @id @default(autoincrement())
-  name         String
-  category     String
-  subcategory  String
-  description  String?
-  price        Float
-  unit         String          @default("piece")
-  imageUrl     String
-  brandId      Int
-  brand        Brand           @relation(fields: [brandId], references: [id])
-  ratings      ProductRating[]
-  stockStatus  String          @default("In Stock")
-  stockCount   Int             @default(100)
+  id          Int             @id @default(autoincrement())
+  name        String
+  category    String
+  subcategory String
+  description String?
+  price       Float
+  unit        String          @default("piece")
+  imageUrl    String
+  brandId     Int
+  brand       Brand           @relation(fields: [brandId], references: [id])
+  ratings     ProductRating[]
+  stockStatus String          @default("In Stock")
+  stockCount  Int             @default(100)
 
   @@index([category])
   @@index([stockStatus])
@@ -54,24 +56,25 @@ model Product {
 }
 
 model ProductRating {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   rating    Int
   userId    Int?
+  user      User?   @relation(fields: [userId], references: [id])
   productId Int
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model Reservation {
   id         Int      @id @default(autoincrement())
   name       String
   phone      String
-  email      String?  // Populated when order is placed by a logged-in user
-  userId     Int?     // Optional link to User account
+  email      String? // Populated when order is placed by a logged-in user
+  userId     Int? // Optional link to User account
   user       User?    @relation(fields: [userId], references: [id])
   productId  Int
   quantity   Int
   pickupDate DateTime
-  notes      String?  // Special notes from user
+  notes      String? // Special notes from user
   status     String   @default("Pending")
   createdAt  DateTime @default(now())
 
@@ -84,6 +87,7 @@ model Reservation {
 model AiQuery {
   id        Int      @id @default(autoincrement())
   userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
   query     String
   response  String
   createdAt DateTime @default(now())
