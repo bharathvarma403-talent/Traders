@@ -2,14 +2,14 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "postinstall": "prisma generate",
-    "build": "prisma generate && node prisma/seed.js",
+    "build": "prisma generate",
     "db:push": "prisma db push",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "node prisma/seed.js",
-    "start": "node server.js",
+    "start": "prisma migrate deploy && node prisma/seed.js && node server.js",
     "seed:auth": "node prisma/seed_auth.js",
     "dev": "node --watch server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
